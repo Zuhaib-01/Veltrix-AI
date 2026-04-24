@@ -6,13 +6,17 @@ import Sidebar from '@/components/Sidebar';
 export default function BlockedPage() {
   const [blocked, setBlocked] = useState({ blocked_urls: [] as string[], blocked_senders: [] as string[] });
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState<'urls' | 'senders'>('urls');
 
   useEffect(() => {
     async function load() {
       try {
+        setError(null);
         const data = await getBlocked();
         setBlocked(data);
+      } catch (e: any) {
+        setError(e?.message || 'Failed to load blocked list');
       } finally {
         setLoading(false);
       }
@@ -62,6 +66,15 @@ export default function BlockedPage() {
           {loading ? (
             <div className="flex items-center justify-center h-48">
               <div className="w-6 h-6 border-2 border-blue-500/30 border-t-blue-500 rounded-full animate-spin" />
+            </div>
+          ) : error ? (
+            <div className="p-5">
+              <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4">
+                <p className="text-red-300 text-sm font-mono">{error}</p>
+                <p className="text-red-400/80 text-xs mt-2 font-mono">
+                  Verify NEXT_PUBLIC_API_BASE_URL in veltrix-dashboard/.env.local.
+                </p>
+              </div>
             </div>
           ) : items.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-48 text-slate-600">

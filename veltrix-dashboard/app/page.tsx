@@ -9,11 +9,13 @@ export default function DashboardPage() {
   const [alerts, setAlerts] = useState<AlertItem[]>([]);
   const [blocked, setBlocked] = useState({ blocked_urls: [] as string[], blocked_senders: [] as string[] });
   const [health, setHealth] = useState<boolean | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function load() {
       try {
+        setError(null);
         const [alertsData, blockedData, healthOk] = await Promise.all([
           getAlerts(100),
           getBlocked(),
@@ -23,7 +25,9 @@ export default function DashboardPage() {
         setBlocked(blockedData);
         setHealth(healthOk);
       } catch {
+      } catch (e: any) {
         setHealth(false);
+        setError(e?.message || 'Failed to load dashboard data from backend');
       } finally {
         setLoading(false);
       }
@@ -104,6 +108,13 @@ export default function DashboardPage() {
               <div className="w-8 h-8 border-2 border-blue-500/30 border-t-blue-500 rounded-full animate-spin mx-auto mb-3" />
               <p className="text-slate-500 text-sm font-mono">Loading threat data...</p>
             </div>
+          </div>
+        ) : error ? (
+          <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-5 mb-6">
+            <p className="text-red-300 text-sm font-mono">{error}</p>
+            <p className="text-red-400/80 text-xs mt-2 font-mono">
+              Set NEXT_PUBLIC_API_BASE_URL in veltrix-dashboard/.env.local and restart npm run dev.
+            </p>
           </div>
         ) : (
           <>
