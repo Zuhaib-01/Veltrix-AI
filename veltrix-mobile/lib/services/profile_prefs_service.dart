@@ -26,13 +26,28 @@ class ProfilePrefsService {
     final prefs = await SharedPreferences.getInstance();
     final raw = prefs.getString(_manualEmailsKey);
     if (raw == null || raw.isEmpty) return const [];
-    final decoded = jsonDecode(raw) as List<dynamic>;
-    return decoded
-        .map((e) => e.toString().trim().toLowerCase())
-        .where((e) => e.contains('@'))
-        .toSet()
-        .toList()
-      ..sort();
+
+    try {
+      final decoded = jsonDecode(raw) as List<dynamic>;
+      return decoded
+          .map((e) => e.toString().trim().toLowerCase())
+          .where((e) => e.contains('@'))
+          .toSet()
+          .toList()
+        ..sort();
+    } catch (_) {
+      // Fallback for legacy/corrupted values (e.g. comma-separated string).
+      final legacy = raw
+          .split(',')
+          .map((e) => e.trim().toLowerCase())
+          .where((e) => e.contains('@'))
+          .toSet()
+          .toList()
+        ..sort();
+
+      await prefs.setString(_manualEmailsKey, jsonEncode(legacy));
+      return legacy;
+    }
   }
 
   static Future<void> addManualEmail(String email) async {
