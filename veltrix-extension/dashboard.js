@@ -7,6 +7,18 @@ let currentStats = { total: 0, phishing: 0, suspicious: 0, safe: 0 };
 let threatLog    = [];
 let backendStatus = { online: false, mlConnected: false, mode: "offline", reason: "" };
 
+function bgMsg(msg) {
+  return new Promise(resolve => {
+    try {
+      chrome.runtime.sendMessage(msg, res => {
+        resolve(chrome.runtime.lastError ? null : res);
+      });
+    } catch (_) {
+      resolve(null);
+    }
+  });
+}
+
 async function init() {
   showLoading(true);
 
@@ -54,7 +66,7 @@ async function loadThreatLog() {
 }
 
 async function loadBackendStatus() {
-  backendStatus = await getBackendHealth();
+  backendStatus = await bgMsg({ type: "HEALTH_CHECK" }) || await getBackendHealth();
 }
 
 function setConnectionBadge(id, text, tone) {

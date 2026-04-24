@@ -11,6 +11,18 @@ let userEmail     = null;
 let blockedSenders = [];
 let backendState  = { online: null, mlConnected: null, reason: "" };
 
+function bgMsg(msg) {
+  return new Promise(resolve => {
+    try {
+      chrome.runtime.sendMessage(msg, res => {
+        resolve(chrome.runtime.lastError ? null : res);
+      });
+    } catch (_) {
+      resolve(null);
+    }
+  });
+}
+
 // --- Boot ---
 (async () => {
   try {
@@ -74,20 +86,19 @@ async function removeBlockedSender(sender) {
 // --- Backend ML call ---
 async function callBackendML(text, urls, sender, subject) {
   try {
-    const res = await fetch(`${API_URL}/analyze-text`, {
-      method:  "POST",
-      headers: { "Content-Type": "application/json" },
-      body:    JSON.stringify({
+    const res = await bgMsg({
+      type: "ANALYZE_TEXT",
+      payload: {
         text:    text || " ",
         urls:    urls || [],
         sender:  sender || "",
         subject: subject || "",
-      }),
-      signal: AbortSignal.timeout(VELTRIX_CFG.API_TIMEOUT_MS),
+      },
     });
-    if (!res.ok) return null;
+    if (!res?.ok || !res.data) return null;
     backendState.online = true;
-    const json = await res.json();
+    backendState.mlConnected = true;
+    const json = res.data;
     if (json.label) json.label = json.label.toLowerCase();
     return json;
   } catch (_) {
@@ -102,7 +113,7 @@ async function callBackendML(text, urls, sender, subject) {
 }
 
 async function refreshBackendStatus() {
-  backendState = await getBackendHealth();
+  backendState = await bgMsg({ type: "HEALTH_CHECK" }) || await getBackendHealth();
   updateIndicator();
 }
 

@@ -24,6 +24,20 @@ function keepAlive(tabId) {
 }
 
 chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
+  if (msg.type === "ANALYZE_TEXT") {
+    analyzeText(msg.payload || {})
+      .then(sendResponse)
+      .catch(err => sendResponse({ ok: false, error: err?.message || "analyze_text_failed" }));
+    return true;
+  }
+
+  if (msg.type === "ANALYZE_URL") {
+    analyzeUrl(msg.url || "")
+      .then(sendResponse)
+      .catch(err => sendResponse({ ok: false, error: err?.message || "analyze_url_failed" }));
+    return true;
+  }
+
   if (msg.type === "BLOCK_SENDER") {
     blockSender(msg.sender)
       .then(sendResponse)
@@ -85,6 +99,61 @@ async function blockUrl(url) {
 
 async function healthCheck() {
   return getBackendHealth();
+}
+
+async function analyzeText(payload) {
+  try {
+    const base = await api();
+    const res = await fetch(`${base}/analyze-text`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        text: payload.text || " ",
+        urls: Array.isArray(payload.urls) ? payload.urls : [],
+        sender: payload.sender || "",
+        subject: payload.subject || "",
+      }),
+      signal: AbortSignal.timeout(10000),
+    });
+
+    if (!res.ok) {
+      const detail = await safeText(res);
+      return { ok: false, status: res.status, error: detail || "backend_analyze_text_failed" };
+    }
+
+    return { ok: true, data: await res.json() };
+  } catch (err) {
+    return { ok: false, error: err?.message || "backend_unreachable" };
+  }
+}
+
+async function analyzeUrl(url) {
+  try {
+    const base = await api();
+    const res = await fetch(`${base}/analyze-url`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ url }),
+      signal: AbortSignal.timeout(10000),
+    });
+
+    if (!res.ok) {
+      const detail = await safeText(res);
+      return { ok: false, status: res.status, error: detail || "backend_analyze_url_failed" };
+    }
+
+    return { ok: true, data: await res.json() };
+  } catch (err) {
+    return { ok: false, error: err?.message || "backend_unreachable" };
+  }
+}
+
+async function safeText(res) {
+  try {
+    return await res.text();
+  } catch (_) {
+    return "";
+  }
 }
 
 let threatCount = 0;

@@ -6,6 +6,18 @@ async function getApi() {
   return _apiUrl;
 }
 
+function bgMsg(msg) {
+  return new Promise(resolve => {
+    try {
+      chrome.runtime.sendMessage(msg, res => {
+        resolve(chrome.runtime.lastError ? null : res);
+      });
+    } catch (_) {
+      resolve(null);
+    }
+  });
+}
+
 const elToggle     = document.getElementById("enableToggle");
 const elToggleLbl  = document.getElementById("toggleLabel");
 const elRescan     = document.getElementById("rescanBtn");
@@ -157,7 +169,8 @@ elDash.addEventListener("click", () => {
 });
 
 async function checkHealth() {
-  renderHealthStatus(await getBackendHealth());
+  const status = await bgMsg({ type: "HEALTH_CHECK" });
+  renderHealthStatus(status || await getBackendHealth());
 }
 
 function setConnectionText(el, text, tone) {
@@ -209,19 +222,15 @@ elScanBtn.addEventListener("click", async () => {
   setLoading(true);
   elResult.style.display = "none";
   try {
-    const base = await getApi();
-    const endpoint = (url && !text) ? `${base}/analyze-url` : `${base}/analyze-text`;
-    const body     = (url && !text)
-      ? JSON.stringify({ url })
-      : JSON.stringify({ text, urls: url ? [url] : [] });
-    const res    = await fetch(endpoint, {
-      method:  "POST",
-      headers: { "Content-Type": "application/json" },
-      body,
-      signal:  AbortSignal.timeout(10000),
-    });
-    if (!res.ok) throw new Error("backend_unavailable");
-    showResult(await res.json());
+    const result = (url && !text)
+      ? await bgMsg({ type: "ANALYZE_URL", url })
+      : await bgMsg({
+          type: "ANALYZE_TEXT",
+          payload: { text, urls: url ? [url] : [] },
+        });
+
+    if (!result?.ok || !result.data) throw new Error(result?.error || "backend_unavailable");
+    showResult(result.data);
   } catch {
     showResult(await analyzeLocally(text, url));
     checkHealth();
