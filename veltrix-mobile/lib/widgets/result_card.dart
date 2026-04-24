@@ -14,12 +14,13 @@ class ResultCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final (labelColor, labelBg, icon) = _labelStyle(result.label);
+    final primaryUrlRisk = result.urlRisk;
 
     return Container(
       decoration: BoxDecoration(
         color: cs.surfaceContainer,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: labelColor.withOpacity(0.4)),
+        border: Border.all(color: labelColor.withValues(alpha: 0.4)),
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Container(
@@ -44,8 +45,21 @@ class ResultCard extends StatelessWidget {
             const SizedBox(height: 14),
             _label(context, 'Threat categories'),
             const SizedBox(height: 6),
-            Wrap(spacing: 6, runSpacing: 6,
-                children: result.threats.map((t) => _chip(context, t, null, bg: labelColor.withOpacity(0.15), fg: labelColor)).toList()),
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: result.threats
+                  .map(
+                    (threat) => _chip(
+                      context,
+                      '${threat.category} (${threat.severity})',
+                      null,
+                      bg: labelColor.withValues(alpha: 0.15),
+                      fg: labelColor,
+                    ),
+                  )
+                  .toList(),
+            ),
           ],
           if (result.reasons.isNotEmpty) ...[
             const SizedBox(height: 14),
@@ -58,11 +72,19 @@ class ResultCard extends StatelessWidget {
                   Expanded(child: Text(r, style: TextStyle(fontSize: 13, color: cs.onSurfaceVariant))),
                 ]))),
           ],
-          if (result.urlRisk != null) ...[
+          if (primaryUrlRisk != null) ...[
             const SizedBox(height: 14),
             _label(context, 'URL risk detail'),
             const SizedBox(height: 6),
-            ...result.urlRisk!.reasons.map((r) => Padding(padding: const EdgeInsets.only(bottom: 5),
+            if (primaryUrlRisk.url.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: SelectableText(
+                  primaryUrlRisk.url,
+                  style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
+                ),
+              ),
+            ...primaryUrlRisk.reasons.map((r) => Padding(padding: const EdgeInsets.only(bottom: 5),
                 child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Icon(Icons.link, size: 14, color: cs.onSurfaceVariant),
                   const SizedBox(width: 4),
@@ -108,7 +130,7 @@ class ResultCard extends StatelessWidget {
         icon: Icon(icon, size: 15, color: color),
         label: Text(label, style: TextStyle(color: color, fontSize: 13)),
         style: OutlinedButton.styleFrom(
-          side: BorderSide(color: color.withOpacity(0.5)),
+          side: BorderSide(color: color.withValues(alpha: 0.5)),
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         ),

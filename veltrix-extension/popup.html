@@ -26,16 +26,40 @@
 
     .logo {
       width: 32px; height: 32px;
-      background: #111111;
       border-radius: 7px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 14px; font-weight: 700; color: #fff;
+      display: block;
       flex-shrink: 0;
+      object-fit: cover;
     }
 
     .header-info { flex: 1; }
     .header-info h1 { font-size: 14px; font-weight: 700; color: #111111; }
     .header-info p  { font-size: 10px; color: #9ca3af; margin-top: 1px; }
+
+    .connection-stack {
+      margin-top: 4px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .connection-line {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 10px;
+      color: #6b7280;
+    }
+    .connection-key {
+      min-width: 52px;
+      font-weight: 600;
+      color: #374151;
+    }
+    .connection-value {
+      font-weight: 500;
+    }
+    .connection-value.online { color: #16a34a; }
+    .connection-value.warn { color: #d97706; }
+    .connection-value.offline { color: #dc2626; }
 
     .status-dot {
       width: 8px; height: 8px; border-radius: 50%;
@@ -417,10 +441,20 @@
 <body>
 
   <div class="header">
-    <div class="logo">V</div>
+    <img class="logo" src="icons/icon48.png" alt="Veltrix AI logo" />
     <div class="header-info">
       <h1>Veltrix AI</h1>
       <p>Phishing Shield v1.0</p>
+      <div class="connection-stack">
+        <div class="connection-line">
+          <span class="connection-key">Backend</span>
+          <span class="connection-value" id="backendStatusText">Checking...</span>
+        </div>
+        <div class="connection-line">
+          <span class="connection-key">ML Model</span>
+          <span class="connection-value" id="mlStatusText">Checking...</span>
+        </div>
+      </div>
     </div>
     <div class="status-dot" id="statusDot" title="Checking..."></div>
   </div>

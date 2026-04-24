@@ -8,14 +8,23 @@ from app.core.schemas import (
     AnalyzeBatchRequest, AnalyzeBatchResponse,
 )
 from app.core import store
-from app.ml.inference import predict, predict_batch, _analyze_url_risk
+from app.ml.inference import predict, predict_batch, _analyze_url_risk, get_model_status
 
 router = APIRouter()
 
 
 @router.get("/health")
 async def health():
-    return {"status": "ok", "service": "Veltrix AI", "version": "1.0.0"}
+    model_status = get_model_status()
+    return {
+        "status": "ok",
+        "service": "Veltrix AI",
+        "version": "1.0.0",
+        "ml_connected": model_status["connected"],
+        "mode": model_status["mode"],
+        "ml_reason": model_status["reason"],
+        "models": model_status,
+    }
 
 
 @router.post("/analyze-text", response_model=AnalysisResponse)

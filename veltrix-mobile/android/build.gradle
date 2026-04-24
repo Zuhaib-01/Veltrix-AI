@@ -1,0 +1,39 @@
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+def flutterBuildDir = rootProject.layout.buildDirectory.dir("../../build").get()
+rootProject.layout.buildDirectory.value(flutterBuildDir)
+
+subprojects {
+    def flutterSubprojectBuildDir = flutterBuildDir.dir(project.name)
+    project.layout.buildDirectory.value(flutterSubprojectBuildDir)
+    project.evaluationDependsOn(":app")
+}
+
+subprojects { subproject ->
+    def configureAndroidCompileOptions = {
+        subproject.android {
+            compileOptions {
+                sourceCompatibility JavaVersion.VERSION_17
+                targetCompatibility JavaVersion.VERSION_17
+            }
+        }
+    }
+
+    subproject.plugins.withId("com.android.application", configureAndroidCompileOptions)
+    subproject.plugins.withId("com.android.library", configureAndroidCompileOptions)
+
+    tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
+        kotlinOptions {
+            jvmTarget = "17"
+        }
+    }
+}
+
+tasks.register("clean", Delete) {
+    delete rootProject.buildDir
+}

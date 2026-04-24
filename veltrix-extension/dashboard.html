@@ -51,10 +51,9 @@
 
     .topbar-logo {
       width: 36px; height: 36px;
-      background: var(--text);
       border-radius: 8px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 18px;
+      display: block;
+      object-fit: cover;
     }
 
     .topbar-name {
@@ -186,6 +185,33 @@
       display: flex; align-items: center; gap: 8px;
       font-size: 11px; color: var(--muted);
     }
+
+    .status-connections {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+    .status-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: #fff;
+      font-size: 10px;
+      font-weight: 600;
+      color: #374151;
+    }
+    .status-chip-label {
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .4px;
+    }
+    .status-chip-value.online { color: var(--green); }
+    .status-chip-value.warn { color: #d97706; }
+    .status-chip-value.offline { color: var(--red); }
 
     /* ── Divider bar ─────────────────────────────────────────────── */
     .divider {
@@ -321,7 +347,7 @@
   <!-- Top bar -->
   <div class="topbar">
     <div class="topbar-left">
-      <div class="topbar-logo" style="color:#fff;font-size:16px;font-weight:700;">V</div>
+      <img class="topbar-logo" src="icons/icon48.png" alt="Veltrix AI logo" />
       <div>
         <div class="topbar-name">Veltrix AI</div>
         <div class="topbar-sub">My Phishing Report</div>
@@ -346,6 +372,16 @@
         <div class="status-text">
           <strong id="statusText">Protection Active</strong>
           <span id="statusSub">Scanning Gmail in real time</span>
+          <div class="status-connections">
+            <div class="status-chip">
+              <span class="status-chip-label">Backend</span>
+              <span class="status-chip-value" id="backendConnectionText">Checking...</span>
+            </div>
+            <div class="status-chip">
+              <span class="status-chip-label">ML</span>
+              <span class="status-chip-value" id="mlConnectionText">Checking...</span>
+            </div>
+          </div>
         </div>
       </div>
       <div class="status-toggle">

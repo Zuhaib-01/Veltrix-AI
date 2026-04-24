@@ -9,10 +9,11 @@ from app.core.config import settings
 _model = None
 _vectorizer = None
 _model_loaded = False
+_model_error = None
 
 
 def _load_models():
-    global _model, _vectorizer, _model_loaded
+    global _model, _vectorizer, _model_loaded, _model_error
     if _model_loaded:
         return
     model_path = Path(settings.MODEL_PATH)
@@ -22,10 +23,34 @@ def _load_models():
             _model = joblib.load(model_path)
             _vectorizer = joblib.load(vec_path)
             _model_loaded = True
-        except Exception:
+            _model_error = None
+        except Exception as exc:
             _model_loaded = False
+            _model_error = f"Failed to load model artifacts: {exc}"
     else:
         _model_loaded = False
+        missing = []
+        if not model_path.exists():
+            missing.append(str(model_path))
+        if not vec_path.exists():
+            missing.append(str(vec_path))
+        _model_error = (
+            "Missing model artifacts: " + ", ".join(missing)
+            if missing
+            else "Model artifacts are unavailable"
+        )
+
+
+def get_model_status() -> dict:
+    _load_models()
+    connected = bool(_model_loaded and _vectorizer is not None and _model is not None)
+    return {
+        "connected": connected,
+        "mode": "ml" if connected else "rules_only",
+        "reason": _model_error if not connected else "ML model connected",
+        "model_path": settings.MODEL_PATH,
+        "vectorizer_path": settings.VECTORIZER_PATH,
+    }
 
 
 URGENCY_KEYWORDS = [

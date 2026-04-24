@@ -4,7 +4,11 @@ import 'screens/home_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await dotenv.load(fileName: '.env');
+  try {
+    await dotenv.load(fileName: '.env');
+  } catch (_) {
+    // The app can still boot with dart-define or localhost defaults.
+  }
   runApp(const VeltrixApp());
 }
 

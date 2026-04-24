@@ -1,4 +1,12 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000';
+const rawApiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+
+function getApiBaseUrl() {
+  const normalized = rawApiBaseUrl?.trim().replace(/\/$/, '') || '';
+  if (!normalized) {
+    throw new Error('Missing NEXT_PUBLIC_API_BASE_URL. Configure it in veltrix-dashboard/.env.local');
+  }
+  return normalized;
+}
 
 export interface AnalysisResult {
   label: 'phishing' | 'suspicious' | 'safe';
@@ -41,6 +49,7 @@ export async function analyzeText(
   sender?: string,
   subject?: string,
 ): Promise<AnalysisResult> {
+  const API_BASE_URL = getApiBaseUrl();
   const res = await fetch(`${API_BASE_URL}/analyze-text`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -51,6 +60,7 @@ export async function analyzeText(
 }
 
 export async function analyzeUrl(url: string): Promise<AnalysisResult> {
+  const API_BASE_URL = getApiBaseUrl();
   const res = await fetch(`${API_BASE_URL}/analyze-url`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -61,6 +71,7 @@ export async function analyzeUrl(url: string): Promise<AnalysisResult> {
 }
 
 export async function blockUrl(url: string): Promise<{ success: boolean; message: string }> {
+  const API_BASE_URL = getApiBaseUrl();
   const res = await fetch(`${API_BASE_URL}/block-url`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -70,6 +81,7 @@ export async function blockUrl(url: string): Promise<{ success: boolean; message
 }
 
 export async function blockSender(sender: string): Promise<{ success: boolean; message: string }> {
+  const API_BASE_URL = getApiBaseUrl();
   const res = await fetch(`${API_BASE_URL}/block-sender`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -79,12 +91,14 @@ export async function blockSender(sender: string): Promise<{ success: boolean; m
 }
 
 export async function getAlerts(limit = 50): Promise<{ alerts: AlertItem[]; total: number }> {
+  const API_BASE_URL = getApiBaseUrl();
   const res = await fetch(`${API_BASE_URL}/alerts?limit=${limit}`);
   if (!res.ok) throw new Error('Failed to fetch alerts');
   return res.json();
 }
 
 export async function getBlocked(): Promise<{ blocked_urls: string[]; blocked_senders: string[] }> {
+  const API_BASE_URL = getApiBaseUrl();
   const res = await fetch(`${API_BASE_URL}/blocked`);
   if (!res.ok) throw new Error('Failed to fetch blocked list');
   return res.json();
@@ -92,6 +106,7 @@ export async function getBlocked(): Promise<{ blocked_urls: string[]; blocked_se
 
 export async function checkHealth(): Promise<boolean> {
   try {
+    const API_BASE_URL = getApiBaseUrl();
     const res = await fetch(`${API_BASE_URL}/health`);
     return res.ok;
   } catch {

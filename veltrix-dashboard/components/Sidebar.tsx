@@ -18,9 +18,11 @@ export default function Sidebar() {
       {/* Logo */}
       <div className="p-6 border-b border-[#1e3a5f]">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-lg">
-            🛡
-          </div>
+          <img
+            src="/veltrix-logo.png"
+            alt="Veltrix AI logo"
+            className="w-9 h-9 rounded-lg object-cover"
+          />
           <div>
             <p className="font-bold text-sm text-slate-900 leading-none">Veltrix AI</p>
             <p className="text-[10px] text-slate-400 mt-0.5">Threat Intelligence</p>

@@ -5,6 +5,19 @@ const $ = (id) => document.getElementById(id);
 let currentEmail = null;
 let currentStats = { total: 0, phishing: 0, suspicious: 0, safe: 0 };
 let threatLog    = [];
+let backendStatus = { online: false, mlConnected: false, mode: "offline", reason: "" };
+
+function bgMsg(msg) {
+  return new Promise(resolve => {
+    try {
+      chrome.runtime.sendMessage(msg, res => {
+        resolve(chrome.runtime.lastError ? null : res);
+      });
+    } catch (_) {
+      resolve(null);
+    }
+  });
+}
 
 async function init() {
   showLoading(true);
@@ -29,6 +42,7 @@ async function init() {
   setUserUI(currentEmail);
   await loadUserStats();
   await loadThreatLog();
+  await loadBackendStatus();
   await loadProtectionStatus();
   await loadBlockedSenders();
 
@@ -51,6 +65,17 @@ async function loadThreatLog() {
   threatLog = data[key] || [];
 }
 
+async function loadBackendStatus() {
+  backendStatus = await bgMsg({ type: "HEALTH_CHECK" }) || await getBackendHealth();
+}
+
+function setConnectionBadge(id, text, tone) {
+  const el = $(id);
+  if (!el) return;
+  el.textContent = text;
+  el.className = `status-chip-value ${tone}`;
+}
+
 async function loadProtectionStatus() {
   const d  = await chrome.storage.local.get("veltrix_enabled");
   const on = d.veltrix_enabled !== false;
@@ -58,13 +83,42 @@ async function loadProtectionStatus() {
   const txt  = $("statusText");
   const sub  = $("statusSub");
   const lbl  = $("statusToggleLabel");
+
+  if (!backendStatus.online) {
+    setConnectionBadge("backendConnectionText", "Offline", "offline");
+    setConnectionBadge("mlConnectionText", "Unavailable", "offline");
+  } else {
+    setConnectionBadge("backendConnectionText", "Connected", "online");
+    setConnectionBadge(
+      "mlConnectionText",
+      backendStatus.mlConnected ? "Connected" : (backendStatus.reason || "Offline"),
+      backendStatus.mlConnected ? "online" : "warn"
+    );
+  }
+
   if (on) {
     dot.classList.remove("off");
-    txt.textContent = "Protection Active";
-    sub.textContent = "Scanning Gmail in real time";
     lbl.textContent = "ON";
+    if (!backendStatus.online) {
+      dot.style.background = "#ef4444";
+      dot.style.boxShadow = "0 0 10px rgba(239,68,68,.45)";
+      txt.textContent = "Local Rules Only";
+      sub.textContent = "Backend offline. Extension is using local fallback detection.";
+    } else if (!backendStatus.mlConnected) {
+      dot.style.background = "#f59e0b";
+      dot.style.boxShadow = "0 0 10px rgba(245,158,11,.45)";
+      txt.textContent = "Rules Active";
+      sub.textContent = backendStatus.reason || "Backend online, but ML model is not connected.";
+    } else {
+      dot.style.background = "#34d399";
+      dot.style.boxShadow = "0 0 10px rgba(52,211,153,.45)";
+      txt.textContent = "Protection Active";
+      sub.textContent = "ML model connected and scanning Gmail in real time";
+    }
   } else {
     dot.classList.add("off");
+    dot.style.background = "";
+    dot.style.boxShadow = "";
     txt.textContent = "Protection Paused";
     sub.textContent = "Turn on via the extension popup";
     lbl.textContent = "OFF";
@@ -211,6 +265,7 @@ $("refreshBtn").addEventListener("click", async () => {
   $("refreshBtn").disabled    = true;
   await loadUserStats();
   await loadThreatLog();
+  await loadBackendStatus();
   await loadProtectionStatus();
   animateDashboard();
   $("refreshBtn").textContent = "Refresh";

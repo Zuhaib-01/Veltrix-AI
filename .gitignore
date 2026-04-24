@@ -106,7 +106,7 @@ site/
 *.ipynb
 
 # ML Models & Large Data Files
-*.pkl
+
 *.pickle
 *.joblib
 *.h5

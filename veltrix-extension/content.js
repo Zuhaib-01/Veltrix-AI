@@ -9,6 +9,19 @@ let scanStats     = { total: 0, phishing: 0, suspicious: 0, safe: 0 };
 let enabled       = true;
 let userEmail     = null;
 let blockedSenders = [];
+let backendState  = { online: null, mlConnected: null, reason: "" };
+
+function bgMsg(msg) {
+  return new Promise(resolve => {
+    try {
+      chrome.runtime.sendMessage(msg, res => {
+        resolve(chrome.runtime.lastError ? null : res);
+      });
+    } catch (_) {
+      resolve(null);
+    }
+  });
+}
 
 // --- Boot ---
 (async () => {
@@ -21,6 +34,8 @@ let blockedSenders = [];
 
   injectStyles();
   createIndicator();
+  refreshBackendStatus();
+  setInterval(refreshBackendStatus, 60000);
   resolveUser();
   setTimeout(resolveUser, 3000);
   if (enabled) scan();
@@ -71,22 +86,35 @@ async function removeBlockedSender(sender) {
 // --- Backend ML call ---
 async function callBackendML(text, urls, sender, subject) {
   try {
-    const res = await fetch(`${API_URL}/analyze-text`, {
-      method:  "POST",
-      headers: { "Content-Type": "application/json" },
-      body:    JSON.stringify({
+    const res = await bgMsg({
+      type: "ANALYZE_TEXT",
+      payload: {
         text:    text || " ",
         urls:    urls || [],
         sender:  sender || "",
         subject: subject || "",
-      }),
-      signal: AbortSignal.timeout(VELTRIX_CFG.API_TIMEOUT_MS),
+      },
     });
-    if (!res.ok) return null;
-    const json = await res.json();
+    if (!res?.ok || !res.data) return null;
+    backendState.online = true;
+    backendState.mlConnected = true;
+    const json = res.data;
     if (json.label) json.label = json.label.toLowerCase();
     return json;
-  } catch (_) { return null; }
+  } catch (_) {
+    backendState = {
+      online: false,
+      mlConnected: false,
+      reason: "Backend offline",
+    };
+    updateIndicator();
+    return null;
+  }
+}
+
+async function refreshBackendStatus() {
+  backendState = await bgMsg({ type: "HEALTH_CHECK" }) || await getBackendHealth();
+  updateIndicator();
 }
 
 // --- Combined ML + rule-based analysis ---
@@ -103,7 +131,7 @@ async function analyzeText(text, urls = [], sender = "", subject = "") {
 
   const [mlResult, ruleResult] = await Promise.all([
     callBackendML(text, urls, sender, subject),
-    Promise.resolve(localFallback(text, urls)),
+    Promise.resolve(localFallback(text, urls, sender, subject)),
   ]);
 
   if (!mlResult) return { ...ruleResult, offline: true };
@@ -134,135 +162,8 @@ async function analyzeText(text, urls = [], sender = "", subject = "") {
 }
 
 // --- Local fallback (offline) ---
-const PHISHING_KW = [
-  "verify your account", "confirm your password", "update your payment",
-  "your account has been suspended", "unusual sign-in", "click here to verify",
-  "urgent action required", "your account will be closed",
-  "one-time password", "otp", "wire transfer", "you have won",
-  "claim your prize", "lottery", "bank account", "billing information",
-  "immediate action", "reset your password", "validate your information",
-  "confirm your identity", "security alert", "unauthorized access",
-  "account has been limited", "update billing", "payment declined",
-];
-const SHORT_DOMAINS = [
-  "bit.ly","tinyurl.com","goo.gl","ow.ly","t.co","short.link",
-  "cutt.ly","rb.gy","is.gd","tiny.cc","buff.ly","adf.ly",
-  "rebrand.ly","v.gd","shorturl.at","tny.im",
-];
-const SUSPICIOUS_TLDS = [
-  ".tk",".ml",".ga",".cf",".gq",".xyz",".top",".club",
-  ".info",".biz",".pw",".cc",".ws",".su",".ru",".cn",
-];
-const BRAND_DOMAINS = {
-  "paypal":   "paypal.com",
-  "google":   "google.com",
-  "apple":    "apple.com",
-  "microsoft":"microsoft.com",
-  "amazon":   "amazon.com",
-  "netflix":  "netflix.com",
-  "facebook": "facebook.com",
-  "instagram":"instagram.com",
-  "linkedin": "linkedin.com",
-  "twitter":  "twitter.com",
-  "bank":     null,
-  "secure":   null,
-  "login":    null,
-};
-
-function localFallback(text = "", urls = []) {
-  const body = text.toLowerCase();
-  const reasons = [];
-  let score = 0;
-
-  for (const kw of PHISHING_KW) {
-    if (body.includes(kw)) {
-      reasons.push(`Contains phrase: "${kw}"`);
-      score += 18;
-      if (score >= 70) break;
-    }
-  }
-
-  // Extract URLs from text if none passed
-  let allUrls = urls && urls.length > 0 ? [...urls] : [];
-  const textUrls = (text.match(/https?:\/\/[^\s<>"']+/gi) || []);
-  for (const tu of textUrls) {
-    if (!allUrls.includes(tu)) allUrls.push(tu);
-  }
-  allUrls = allUrls.slice(0, VELTRIX_CFG.MAX_URLS_PER_EMAIL);
-
-  for (const url of allUrls) {
-    try {
-      const parsed = new URL(url);
-      const h = parsed.hostname.toLowerCase();
-      const fullUrl = url.toLowerCase();
-
-      // Shortened URLs
-      if (SHORT_DOMAINS.some(d => h.includes(d))) {
-        reasons.push(`Shortened URL: ${h}`);
-        score += 25;
-      }
-
-      // IP address links
-      if (/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(h)) {
-        reasons.push(`IP-address link: ${h}`);
-        score += 35;
-      }
-
-      // Suspicious TLDs
-      for (const tld of SUSPICIOUS_TLDS) {
-        if (h.endsWith(tld)) {
-          reasons.push(`Suspicious TLD: ${tld}`);
-          score += 20;
-          break;
-        }
-      }
-
-      // Brand impersonation
-      for (const [brand, legit] of Object.entries(BRAND_DOMAINS)) {
-        if (h.includes(brand) && legit && !h.endsWith(legit)) {
-          reasons.push(`Brand impersonation: ${h} (not ${legit})`);
-          score += 40;
-          break;
-        }
-      }
-
-      // Excessive subdomains
-      if (h.split(".").length > 4) {
-        reasons.push(`Excessive subdomains: ${h}`);
-        score += 15;
-      }
-
-      // Very long URL
-      if (url.length > 200) {
-        reasons.push("Unusually long URL");
-        score += 10;
-      }
-
-      // HTTP on sensitive page
-      if (parsed.protocol === "http:" && /login|account|secure|verify|bank|password/.test(fullUrl)) {
-        reasons.push(`Insecure HTTP on sensitive page: ${h}`);
-        score += 30;
-      }
-
-      // Encoded characters (obfuscation)
-      if ((url.match(/%[0-9A-Fa-f]{2}/g) || []).length > 5) {
-        reasons.push("Heavy URL encoding (possible obfuscation)");
-        score += 15;
-      }
-
-      // @ symbol in URL (credential phishing)
-      if (fullUrl.includes("@") && !fullUrl.includes("mailto:")) {
-        reasons.push("URL contains @ symbol (credential phishing trick)");
-        score += 30;
-      }
-
-    } catch (_) {}
-  }
-
-  score = Math.min(score, 100);
-  const label = score >= 60 ? "phishing" : score >= 30 ? "suspicious" : "safe";
-  if (reasons.length === 0) reasons.push("No threats detected (local scan)");
-  return { label, score, reasons, offline: true };
+function localFallback(text = "", urls = [], sender = "", subject = "") {
+  return runLocalDetection({ text, urls, sender, subject });
 }
 
 // --- Gmail selectors ---
@@ -755,14 +656,30 @@ function updateIndicator() {
   const threats = scanStats.phishing + scanStats.suspicious;
   const txt = document.getElementById("vltx-txt");
   if (txt) {
+    const modeText = !backendState.online
+      ? "local only"
+      : backendState.mlConnected === false
+        ? "rules only"
+        : "ML connected";
     txt.textContent = threats > 0
-      ? `${scanStats.total} scanned | ${threats} threats`
-      : `${scanStats.total} scanned`;
+      ? `${scanStats.total} scanned | ${threats} threats | ${modeText}`
+      : `${scanStats.total} scanned | ${modeText}`;
   }
   const dot = document.getElementById("vltx-dot");
-  if (dot && threats > 0) {
-    dot.style.background  = "#ef4444";
-    dot.style.boxShadow   = "0 0 5px #ef4444";
+  if (dot) {
+    if (!backendState.online) {
+      dot.style.background = "#f59e0b";
+      dot.style.boxShadow = "0 0 5px #f59e0b";
+    } else if (threats > 0) {
+      dot.style.background = "#ef4444";
+      dot.style.boxShadow = "0 0 5px #ef4444";
+    } else if (backendState.mlConnected === false) {
+      dot.style.background = "#f59e0b";
+      dot.style.boxShadow = "0 0 5px #f59e0b";
+    } else {
+      dot.style.background = "#22c55e";
+      dot.style.boxShadow = "0 0 5px #22c55e";
+    }
   }
 }
 

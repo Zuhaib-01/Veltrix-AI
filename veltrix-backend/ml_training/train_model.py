@@ -7,7 +7,7 @@ Veltrix AI - Phishing Classifier Training Script v1.0
 - Run:     python ml_training/train_model.py
 """
 
-import sys
+"""import sys
 import warnings
 import joblib
 import numpy as np
@@ -338,3 +338,4 @@ joblib.dump(vectorizer, vp)
 print(f"\n[SAVED] model.pkl      ({mp.stat().st_size // 1024:,} KB)")
 print(f"[SAVED] vectorizer.pkl ({vp.stat().st_size // 1024:,} KB)")
 print("\n[DONE] Veltrix AI training complete.\n")
+"""
