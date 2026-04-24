@@ -1,0 +1,205 @@
+# ============================================================
+# Veltrix AI - Comprehensive .gitignore
+# ============================================================
+
+# ─────────────────────────────────────────
+# OS & System Files
+# ─────────────────────────────────────────
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+*.swp
+*.swo
+*~
+.idea/
+.vscode/settings.json
+
+# ─────────────────────────────────────────
+# Node.js / npm / yarn / pnpm
+# ─────────────────────────────────────────
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+.npm
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.yarn/install-state.gz
+.pnp.*
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# ─────────────────────────────────────────
+# Next.js (veltrix-dashboard)
+# ─────────────────────────────────────────
+.next/
+out/
+build/
+.cache/
+.vercel/
+next-env.d.ts
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# ─────────────────────────────────────────
+# Environment Variables & Secrets
+# ─────────────────────────────────────────
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.cert
+*.crt
+secrets.json
+config/secrets.*
+
+# ─────────────────────────────────────────
+# Python / Backend (veltrix-backend)
+# ─────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+ENV/
+env.bak/
+venv.bak/
+pip-log.txt
+pip-delete-this-directory.txt
+.tox/
+.coverage
+.coverage.*
+htmlcov/
+.pytest_cache/
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.hypothesis/
+dist/
+*.egg-info/
+*.egg
+*.whl
+site/
+.eggs/
+*.so
+*.dll
+
+# Jupyter Notebooks
+.ipynb_checkpoints
+*.ipynb
+
+# ML Models & Large Data Files
+*.pkl
+*.pickle
+*.joblib
+*.h5
+*.hdf5
+*.pt
+*.pth
+*.bin
+*.onnx
+*.safetensors
+models/
+datasets/
+data/raw/
+*.csv
+*.tsv
+*.parquet
+
+# ─────────────────────────────────────────
+# Chrome Extension (veltrix-extension)
+# ─────────────────────────────────────────
+*.crx
+*.pem
+*.zip
+extension/dist/
+veltrix-extension/dist/
+veltrix-extension/*.zip
+
+# ─────────────────────────────────────────
+# Mobile (veltrix-mobile)
+# ─────────────────────────────────────────
+# React Native / Expo
+.expo/
+.expo-shared/
+*.jks
+*.p8
+*.p12
+*.mobileprovision
+*.orig.*
+web-build/
+android/.gradle/
+android/local.properties
+android/app/debug/
+android/app/release/
+ios/Pods/
+ios/build/
+*.xcworkspace/xcuserdata/
+*.xcodeproj/xcuserdata/
+DerivedData/
+
+# ─────────────────────────────────────────
+# Build Outputs & Dist
+# ─────────────────────────────────────────
+dist/
+build/
+*.tgz
+*.tar.gz
+*.zip
+*.rar
+
+# ─────────────────────────────────────────
+# Logs & Debug
+# ─────────────────────────────────────────
+logs/
+*.log
+*.log.*
+crash.log
+crash.*.log
+*.pid
+*.seed
+*.pid.lock
+
+# ─────────────────────────────────────────
+# Testing & Coverage
+# ─────────────────────────────────────────
+coverage/
+*.lcov
+.nyc_output/
+test-results/
+playwright-report/
+*.snap
+
+# ─────────────────────────────────────────
+# TypeScript
+# ─────────────────────────────────────────
+*.tsbuildinfo
+
+# ─────────────────────────────────────────
+# Miscellaneous
+# ─────────────────────────────────────────
+.turbo/
+.husky/_/
+*.local
+*.bak
+*.tmp
+*.temp
+tmp/
+temp/
