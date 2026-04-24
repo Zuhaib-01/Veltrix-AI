@@ -24,7 +24,6 @@ export default function DashboardPage() {
         setAlerts(alertsData.alerts);
         setBlocked(blockedData);
         setHealth(healthOk);
-      } catch {
       } catch (e: any) {
         setHealth(false);
         setError(e?.message || 'Failed to load dashboard data from backend');
