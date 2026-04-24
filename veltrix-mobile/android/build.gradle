@@ -5,7 +5,12 @@ allprojects {
     }
 }
 
+def flutterBuildDir = rootProject.layout.buildDirectory.dir("../../build").get()
+rootProject.layout.buildDirectory.value(flutterBuildDir)
+
 subprojects {
+    def flutterSubprojectBuildDir = flutterBuildDir.dir(project.name)
+    project.layout.buildDirectory.value(flutterSubprojectBuildDir)
     project.evaluationDependsOn(":app")
 }
 
