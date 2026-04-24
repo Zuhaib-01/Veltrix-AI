@@ -1,11 +1,31 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import '../models/analysis_result.dart';
 
 class ApiService {
-  static String get baseUrl =>
-      dotenv.env['API_BASE_URL'] ?? 'http://10.0.2.2:8000';
+  static const String _definedBaseUrl =
+      String.fromEnvironment('API_BASE_URL', defaultValue: '');
+
+  static String get baseUrl {
+    if (_definedBaseUrl.isNotEmpty) {
+      return _definedBaseUrl;
+    }
+
+    final envBaseUrl = dotenv.env['API_BASE_URL'];
+    if (envBaseUrl != null && envBaseUrl.isNotEmpty) {
+      return envBaseUrl;
+    }
+
+    // `adb reverse tcp:8000 tcp:8000` makes localhost the easiest default
+    // for a USB-connected Android phone during development.
+    if (Platform.isAndroid) {
+      return 'http://127.0.0.1:8000';
+    }
+
+    return 'http://localhost:8000';
+  }
 
   static const Duration _timeout = Duration(seconds: 10);
 

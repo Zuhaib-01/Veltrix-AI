@@ -61,7 +61,9 @@ class _AlertsScreenState extends State<AlertsScreen> {
                             decoration: BoxDecoration(
                               color: cs.surfaceContainer,
                               borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: color.withOpacity(0.3)),
+                              border: Border.all(
+                                color: color.withValues(alpha: 0.3),
+                              ),
                             ),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -71,7 +73,7 @@ class _AlertsScreenState extends State<AlertsScreen> {
                                     Container(
                                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                                       decoration: BoxDecoration(
-                                        color: color.withOpacity(0.15),
+                                        color: color.withValues(alpha: 0.15),
                                         borderRadius: BorderRadius.circular(6),
                                       ),
                                       child: Text(
