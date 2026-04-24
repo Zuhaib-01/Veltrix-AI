@@ -94,15 +94,9 @@ function normalizeApiUrl(value) {
 }
 
 function shouldUseProductionApi(url) {
-  if (!url) return true;
-
-  try {
-    const parsed = new URL(url);
-    const host = parsed.hostname.toLowerCase();
-    return host === "localhost" || host === "127.0.0.1" || host === "0.0.0.0";
-  } catch (_) {
-    return true;
-  }
+  // Use production only when there is no valid configured API URL.
+  // Localhost/127.0.0.1 must remain valid for local backend development.
+  return !url;
 }
 
 async function getApiUrl() {
@@ -110,7 +104,7 @@ async function getApiUrl() {
     const data = await chrome.storage.local.get("veltrix_api_url");
     const storedUrl = normalizeApiUrl(data.veltrix_api_url);
 
-    // Default production backend for first-run, stale localhost config, or invalid values.
+    // Default production backend only for first-run or invalid values.
     if (shouldUseProductionApi(storedUrl)) {
       await chrome.storage.local.set({
         veltrix_api_url: VELTRIX_CFG.DEFAULT_API_URL
