@@ -24,6 +24,7 @@ export default function DashboardPage() {
         setAlerts(alertsData.alerts);
         setBlocked(blockedData);
         setHealth(healthOk);
+      } catch {
       } catch (e: any) {
         setHealth(false);
         setError(e?.message || 'Failed to load dashboard data from backend');
@@ -49,22 +50,55 @@ export default function DashboardPage() {
   ].filter(d => d.value > 0);
 
   return (
-    <div className="flex min-h-screen bg-[#050810] grid-bg">
+    <div className="flex min-h-screen bg-slate-50">
       <Sidebar />
-      <main className="ml-[220px] flex-1 p-8">
+      {/* <main className="ml-[220px] flex-1 p-8 bg-slate-50 bg-[radial-gradient(circle_at_top,rgba(59,130,246,0.06),transparent_60%)]"> */}
+      <main className="ml-[220px] flex-1 p-8 bg-slate-200 bg-[radial-gradient(circle_at_top,rgba(59,130,246,0.04),transparent_60%)]">
         {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
+        <div className="mb-8 flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-slate-900 tracking-tight">
+              Threat Overview
+            </h1>
+            <p className="text-slate-500 text-sm mt-1">
+              Real-time phishing intelligence dashboard
+            </p>
+          </div>
+
+          <div className="flex items-center gap-3 px-4 py-2 rounded-lg border border-slate-200 bg-white shadow-sm">
+            <span className={`w-2 h-2 rounded-full ${health ? 'bg-green-500' : 'bg-red-500'} animate-pulse`} />
+            {/* <span className="text-xs text-slate-600 font-medium"> */}
+            <span className={`text-xs font-medium ${health ? 'text-green-600' : 'text-red-500'}`}>
+              {health === null ? 'Checking...' : health ? 'API Online' : 'API Offline'}
+            </span>
+          </div>
+        </div>
+
+        <div className="mb-8 p-6 rounded-2xl border border-slate-200 bg-white shadow-sm relative overflow-hidden">
+
+
+          <div className="relative flex items-center justify-between">
+
             <div>
-              <h1 className="text-2xl font-bold text-slate-100 font-mono">Threat Overview</h1>
-              <p className="text-slate-500 text-sm mt-1">Real-time phishing intelligence dashboard</p>
+              <p className="text-xs uppercase tracking-widest text-slate-400 mb-2">
+                System Status
+              </p>
+              <h2 className={`text-2xl font-bold ${health ? 'text-green-600' : 'text-red-500'}`}>
+                {health ? "System Healthy" : "Backend Offline"}
+              </h2>
+              <p className="text-slate-500 text-sm mt-1">
+                {alerts.length} events analyzed • {phishingCount + suspiciousCount} threats detected
+              </p>
             </div>
-            <div className="flex items-center gap-2">
-              <span className={`w-2 h-2 rounded-full ${health ? 'bg-green-500 shadow-[0_0_6px_#22c55e]' : 'bg-red-500'} animate-pulse`} />
-              <span className="text-xs text-slate-400 font-mono">
-                {health === null ? 'Checking...' : health ? 'API Online' : 'API Offline'}
-              </span>
+
+            {/* Big threat number */}
+            <div className="text-right">
+              <p className="text-xs text-slate-400 uppercase">Threat Level</p>
+              <p className="text-4xl font-bold text-red-500 tracking-tight">
+                {phishingCount + suspiciousCount}
+              </p>
             </div>
+
           </div>
         </div>
 
@@ -93,10 +127,10 @@ export default function DashboardPage() {
             </div>
 
             {/* Charts Row */}
-            <div className="grid grid-cols-3 gap-4 mb-6">
+            <div className="grid grid-cols-3 gap-5 mb-8">
               {/* Activity Chart */}
-              <div className="col-span-2 bg-[#0f172a] border border-[#1e3a5f] rounded-xl p-5">
-                <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-4 font-mono">Detection Activity</h2>
+              <div className="col-span-2 rounded-2xl p-6 border border-slate-200 bg-white shadow-sm hover:scale-[1.01] transition-all duration-300">
+                <h2 className="text-sm font-semibold text-slate-700 mb-4">Detection Activity</h2>
                 {chartData.length > 0 ? (
                   <ResponsiveContainer width="100%" height={160}>
                     <AreaChart data={chartData}>
@@ -110,29 +144,54 @@ export default function DashboardPage() {
                           <stop offset="95%" stopColor="#f59e0b" stopOpacity={0} />
                         </linearGradient>
                       </defs>
-                      <XAxis dataKey="time" tick={{ fill: '#475569', fontSize: 10 }} axisLine={false} tickLine={false} />
-                      <YAxis tick={{ fill: '#475569', fontSize: 10 }} axisLine={false} tickLine={false} />
+                      <XAxis dataKey="time" tick={{ fill: '#94a3b8', fontSize: 10 }} axisLine={false} tickLine={false} />
+                      <YAxis tick={{ fill: '#94a3b8', fontSize: 10 }} axisLine={false} tickLine={false} />
                       <Tooltip
-                        contentStyle={{ background: '#0f172a', border: '1px solid #1e3a5f', borderRadius: 8, fontSize: 11 }}
-                        labelStyle={{ color: '#94a3b8' }}
+                        contentStyle={{
+                          background: '#ffffff',
+                          border: '1px solid #e2e8f0',
+                          borderRadius: 8,
+                          fontSize: 12,
+                        }}
+                        labelStyle={{ color: '#334155' }}
                       />
-                      <Area type="monotone" dataKey="phishing" stroke="#ef4444" fill="url(#phishingGrad)" strokeWidth={2} />
-                      <Area type="monotone" dataKey="suspicious" stroke="#f59e0b" fill="url(#suspiciousGrad)" strokeWidth={2} />
+                      <Area
+                        type="monotone"
+                        dataKey="phishing"
+                        stroke="#ef4444"
+                        fill="url(#phishingGrad)"
+                        strokeWidth={2.5}
+                        dot={false}
+                        activeDot={{ r: 5 }}
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="suspicious"
+                        stroke="#f59e0b"
+                        fill="url(#suspiciousGrad)"
+                        strokeWidth={2.5}
+                        dot={false}
+                        activeDot={{ r: 5 }}
+                      />
                     </AreaChart>
                   </ResponsiveContainer>
                 ) : (
-                  <div className="flex items-center justify-center h-40 text-slate-600 text-sm font-mono">No scan data yet</div>
+                  <div className="flex flex-col items-center justify-center h-40 text-slate-500">
+                    <div className="w-6 h-6 rounded-full bg-white/10 mb-2" />
+                    <p className="text-sm">No activity yet</p>
+                    <p className="text-xs text-slate-600 mt-1">Start scanning to generate insights</p>
+                  </div>
                 )}
               </div>
 
               {/* Pie Chart */}
-              <div className="bg-[#0f172a] border border-[#1e3a5f] rounded-xl p-5">
-                <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-4 font-mono">Threat Distribution</h2>
+              <div className="rounded-2xl p-6 border border-slate-200 bg-white shadow-sm hover:scale-[1.01] transition-all duration-300">
+                <h2 className="text-sm font-semibold text-slate-700 mb-4">Threat Distribution</h2>
                 {pieData.length > 0 ? (
                   <div className="flex flex-col items-center">
                     <ResponsiveContainer width="100%" height={120}>
                       <PieChart>
-                        <Pie data={pieData} cx="50%" cy="50%" innerRadius={35} outerRadius={55} dataKey="value" paddingAngle={3}>
+                        <Pie data={pieData} cx="50%" cy="50%" innerRadius={40} outerRadius={60} dataKey="value" paddingAngle={4}>
                           {pieData.map((entry, i) => (
                             <Cell key={i} fill={entry.color} />
                           ))}
@@ -152,20 +211,28 @@ export default function DashboardPage() {
                     </div>
                   </div>
                 ) : (
-                  <div className="flex items-center justify-center h-40 text-slate-600 text-sm font-mono">No data</div>
+                  <div className="flex flex-col items-center justify-center h-40 text-slate-500">
+                    <div className="w-6 h-6 rounded-full bg-white/10 mb-2" />
+                    <p className="text-sm">No distribution yet</p>
+                    <p className="text-xs text-slate-600 mt-1">Threat data will appear here</p>
+                  </div>
                 )}
               </div>
             </div>
 
             {/* Recent Alerts */}
-            <div className="bg-[#0f172a] border border-[#1e3a5f] rounded-xl">
-              <div className="p-5 border-b border-[#1e3a5f] flex items-center justify-between">
-                <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-widest font-mono">Recent Alerts</h2>
+            <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
+              <div className="p-5 border-b border-slate-200 flex items-center justify-between">
+                <h2 className="text-sm font-semibold text-slate-700">Recent Alerts</h2>
                 <span className="text-[10px] text-slate-500 font-mono">{alerts.length} total</span>
               </div>
-              <div className="divide-y divide-[#1e293b]">
+              <div className="divide-y divide-slate-200">
                 {alerts.length === 0 ? (
-                  <div className="p-8 text-center text-slate-600 text-sm font-mono">No alerts yet. Start scanning to see results.</div>
+                  <div className="flex flex-col items-center justify-center h-40 text-slate-500">
+                    <div className="w-6 h-6 rounded-full bg-white/10 mb-2" />
+                    <p className="text-sm">No alerts yet</p>
+                    <p className="text-xs text-slate-600 mt-1">Your system is monitoring in real-time</p>
+                  </div>
                 ) : (
                   alerts.slice(0, 8).map((alert) => (
                     <AlertRow key={alert.id} alert={alert} />
@@ -181,21 +248,29 @@ export default function DashboardPage() {
 }
 
 function StatCard({ label, value, icon, color }: { label: string; value: number; icon: string; color: string }) {
-  const colors: Record<string, string> = {
-    blue: 'text-blue-400 bg-blue-500/10 border-blue-500/20',
-    red: 'text-red-400 bg-red-500/10 border-red-500/20',
-    amber: 'text-amber-400 bg-amber-500/10 border-amber-500/20',
-    purple: 'text-violet-400 bg-violet-500/10 border-violet-500/20',
+  const accents: Record<string, string> = {
+    blue: 'text-blue-600',
+    red: 'text-red-500',
+    amber: 'text-amber-500',
+    purple: 'text-violet-600',
   };
 
   return (
-    <div className={`rounded-xl p-5 border ${colors[color]}`}>
+    <div className="
+      rounded-2xl border border-slate-200 bg-white p-5
+      shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-[2px]
+    ">
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-xs text-slate-500 font-mono uppercase tracking-wide">{label}</p>
-          <p className="text-3xl font-bold mt-2 font-mono">{value}</p>
+          <p className="text-[11px] text-slate-500 uppercase tracking-wider">{label}</p>
+          <p className="text-3xl font-bold text-slate-900 mt-1 tracking-tight tabular-nums">
+            {value}
+          </p>
         </div>
-        <span className="text-2xl opacity-50">{icon}</span>
+
+        <div className={`text-lg ${accents[color]} mt-1`}>
+          {icon}
+        </div>
       </div>
     </div>
   );
@@ -208,13 +283,13 @@ function AlertRow({ alert }: { alert: AlertItem }) {
   })();
 
   return (
-    <div className="px-5 py-3.5 flex items-center gap-4 hover:bg-white/2 transition-colors">
+    <div className="px-5 py-3.5 flex items-center gap-4 transition-all hover:bg-slate-50 hover:scale-[1.01]">
       <span className={`px-2.5 py-1 rounded text-[10px] font-bold border ${getLabelBg(alert.label)}`}>
         {getLabelText(alert.label)}
       </span>
       <div className="flex-1 min-w-0">
-        <p className="text-xs text-slate-300 truncate">{alert.subject || alert.source || 'Scan'}</p>
-        <p className="text-[10px] text-slate-600 truncate">{alert.sender || '—'}</p>
+        <p className="text-xs text-slate-800 truncate">{alert.subject || alert.source || 'Scan'}</p>
+        <p className="text-[10px] text-slate-500 truncate">{alert.sender || '—'}</p>
       </div>
       <div className="text-right shrink-0">
         <p className="font-mono font-bold text-sm" style={{ color: alert.label === 'phishing' ? '#ef4444' : alert.label === 'suspicious' ? '#f59e0b' : '#22c55e' }}>

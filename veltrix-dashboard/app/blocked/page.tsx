@@ -29,11 +29,11 @@ export default function BlockedPage() {
   const items = tab === 'urls' ? blocked.blocked_urls : blocked.blocked_senders;
 
   return (
-    <div className="flex min-h-screen bg-[#050810] grid-bg">
+    <div className="flex min-h-screen bg-slate-200">
       <Sidebar />
-      <main className="ml-[220px] flex-1 p-8 max-w-3xl">
+      <main className="ml-[220px] flex-1 p-8 bg-slate-200 bg-[radial-gradient(circle_at_top,rgba(59,130,246,0.04),transparent_60%)]">
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-slate-100 font-mono">Blocked List</h1>
+          <h1 className="text-3xl font-bold text-slate-900">Blocked List</h1>
           <p className="text-slate-500 text-sm mt-1">All blocked URLs and senders managed by Veltrix AI</p>
         </div>
 
@@ -42,21 +42,21 @@ export default function BlockedPage() {
           <StatsCard label="Blocked Senders" value={blocked.blocked_senders.length} color="amber" icon="📧" />
         </div>
 
-        <div className="bg-[#0f172a] border border-[#1e3a5f] rounded-xl overflow-hidden">
+        <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
           {/* Tab header */}
-          <div className="flex border-b border-[#1e3a5f]">
+          <div className="flex border-b border-slate-200">
             {(['urls', 'senders'] as const).map(t => (
               <button
                 key={t}
                 onClick={() => setTab(t)}
-                className={`flex-1 py-3 text-sm font-semibold transition-all capitalize ${
+                className={`flex-1 py-3 text-sm font-semibold transition-all capitalize rounded-t-lg ${
                   tab === t
-                    ? 'text-blue-400 bg-blue-500/5 border-b-2 border-blue-500'
-                    : 'text-slate-500 hover:text-slate-300'
-                }`}
+                    ? 'text-blue-600 bg-blue-50 border-b-2 border-blue-500'
+                    : 'text-slate-600 bg-transparent hover:bg-slate-100'
+                  }`}
               >
                 Blocked {t === 'urls' ? 'URLs' : 'Senders'}
-                <span className="ml-2 text-xs bg-surface-600 px-1.5 py-0.5 rounded-full">
+                <span className="ml-2 text-xs bg-slate-100 px-1.5 py-0.5 rounded-full">
                   {t === 'urls' ? blocked.blocked_urls.length : blocked.blocked_senders.length}
                 </span>
               </button>
@@ -79,14 +79,14 @@ export default function BlockedPage() {
           ) : items.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-48 text-slate-600">
               <div className="text-3xl mb-2 opacity-30">⊘</div>
-              <p className="font-mono text-sm">No {tab} blocked yet</p>
+              <p className="text-sm text-slate-500">No {tab} blocked yet</p>
             </div>
           ) : (
-            <div className="divide-y divide-[#1e293b]">
+            <div className="divide-y divide-slate-200">
               {items.map((item, i) => (
-                <div key={i} className="flex items-center gap-3 px-5 py-3.5 hover:bg-white/2 transition-colors">
-                  <span className="text-red-400 shrink-0">⊘</span>
-                  <p className="text-sm text-slate-300 font-mono truncate flex-1">{item}</p>
+                <div key={i} className="flex items-center gap-3 px-5 py-3.5 hover:bg-slate-100 transition-colors">
+                  <span className="text-red-500 shrink-0">⊘</span>
+                  <p className="text-sm text-slate-700 truncate flex-1">{item}</p>
                   <span className="text-[10px] text-slate-600 shrink-0">Blocked</span>
                 </div>
               ))}
@@ -100,14 +100,13 @@ export default function BlockedPage() {
 
 function StatsCard({ label, value, color, icon }: { label: string; value: number; color: string; icon: string }) {
   return (
-    <div className={`flex-1 rounded-xl p-4 border ${
-      color === 'red' ? 'bg-red-500/8 border-red-500/20' : 'bg-amber-500/8 border-amber-500/20'
-    }`}>
+    <div className={`flex-1 rounded-xl p-4 border ${color === 'red' ? 'bg-white border border-slate-200 shadow-sm' : 'bg-white bg-amber-500/8 border-amber-500/20'
+      }`}>
       <div className="flex items-center gap-3">
         <span className="text-2xl">{icon}</span>
         <div>
           <p className="text-[10px] text-slate-500 font-mono uppercase tracking-wide">{label}</p>
-          <p className={`text-2xl font-black font-mono ${color === 'red' ? 'text-red-400' : 'text-amber-400'}`}>{value}</p>
+          <p className={`text-2xl font-black font-mono ${color === 'red' ? 'text-red-500' : 'text-amber-500'}`}>{value}</p>
         </div>
       </div>
     </div>

@@ -54,11 +54,11 @@ export default function ScanPage() {
     : '#3b82f6';
 
   return (
-    <div className="flex min-h-screen bg-[#050810] grid-bg">
+    <div className="flex min-h-screen bg-slate-200">
       <Sidebar />
-      <main className="ml-[220px] flex-1 p-8 max-w-5xl">
+      <main className="ml-[220px] flex-1 p-8 bg-slate-200 bg-[radial-gradient(circle_at_top,rgba(59,130,246,0.04),transparent_60%)]">
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-slate-100 font-mono">Manual Scan</h1>
+          <h1 className="text-3xl font-bold text-slate-900">Manual Scan</h1>
           <p className="text-slate-500 text-sm mt-1">Analyze text, emails, SMS, or URLs for phishing threats</p>
         </div>
 
@@ -66,7 +66,7 @@ export default function ScanPage() {
           {/* Input Panel */}
           <div className="space-y-4">
             {/* Mode Toggle */}
-            <div className="flex bg-[#0f172a] border border-[#1e3a5f] rounded-lg p-1">
+            <div className="flex bg-white border border-slate-200 rounded-lg p-1 shadow-sm">
               {(['text', 'url'] as const).map(m => (
                 <button
                   key={m}
@@ -74,8 +74,8 @@ export default function ScanPage() {
                   className={clsx(
                     'flex-1 py-2 rounded-md text-sm font-semibold transition-all',
                     mode === m
-                      ? 'bg-blue-600 text-white'
-                      : 'text-slate-400 hover:text-slate-200',
+                      ? 'bg-blue-50 text-blue-600'
+                      : 'text-slate-500 hover:text-slate-900',
                   )}
                 >
                   {m === 'text' ? '📧 Text / Email' : '🔗 URL'}
@@ -92,7 +92,7 @@ export default function ScanPage() {
                     value={text}
                     onChange={e => setText(e.target.value)}
                     placeholder="Paste email body, SMS, or any suspicious text..."
-                    className="w-full h-36 bg-[#0f172a] border border-[#1e3a5f] rounded-lg p-3 text-slate-200 text-sm placeholder-slate-600 focus:outline-none focus:border-blue-500 resize-none font-mono"
+                    className="w-full h-36 bg-white border border-slate-200 rounded-lg p-3 text-slate-900 text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 resize-none"
                   />
                 </div>
                 <div>
@@ -101,7 +101,7 @@ export default function ScanPage() {
                     value={subject}
                     onChange={e => setSubject(e.target.value)}
                     placeholder="Email subject line..."
-                    className="w-full bg-[#0f172a] border border-[#1e3a5f] rounded-lg px-3 py-2 text-slate-200 text-sm placeholder-slate-600 focus:outline-none focus:border-blue-500 font-mono"
+                    className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-slate-900 text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                   />
                 </div>
                 <div>
@@ -110,7 +110,7 @@ export default function ScanPage() {
                     value={sender}
                     onChange={e => setSender(e.target.value)}
                     placeholder="sender@example.com"
-                    className="w-full bg-[#0f172a] border border-[#1e3a5f] rounded-lg px-3 py-2 text-slate-200 text-sm placeholder-slate-600 focus:outline-none focus:border-blue-500 font-mono"
+                    className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-slate-900 text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                   />
                 </div>
               </div>
@@ -125,7 +125,7 @@ export default function ScanPage() {
                 value={url}
                 onChange={e => setUrl(e.target.value)}
                 placeholder="https://example.com/suspicious-page"
-                className="w-full bg-[#0f172a] border border-[#1e3a5f] rounded-lg px-3 py-2 text-slate-200 text-sm placeholder-slate-600 focus:outline-none focus:border-blue-500 font-mono"
+                className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-slate-900 text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
               />
             </div>
 
@@ -152,20 +152,20 @@ export default function ScanPage() {
           {/* Result Panel */}
           <div>
             {!result && !loading && (
-              <div className="h-full flex items-center justify-center bg-[#0f172a] border border-[#1e3a5f] rounded-xl border-dashed">
-                <div className="text-center text-slate-600">
+              <div className="h-full flex items-center justify-center bg-white border border-slate-200 rounded-xl border-dashed">
+                <div className="text-center text-slate-500">
                   <div className="text-4xl mb-3 opacity-30">🛡</div>
-                  <p className="text-sm font-mono">Results will appear here</p>
+                  <p className="text-sm">Results will appear here</p>
                 </div>
               </div>
             )}
 
             {loading && (
-              <div className="h-full flex items-center justify-center bg-[#0f172a] border border-[#1e3a5f] rounded-xl scan-container">
+              <div className="h-full flex items-center justify-center bg-white border border-slate-200 rounded-xl scan-container">
                 <div className="text-center">
                   <div className="w-10 h-10 border-2 border-blue-500/30 border-t-blue-500 rounded-full animate-spin mx-auto mb-4" />
-                  <p className="text-slate-400 text-sm font-mono">Running ML analysis...</p>
-                  <p className="text-slate-600 text-xs mt-1 font-mono">Checking heuristics + model</p>
+                  <p className="text-slate-500 text-sm">Running ML analysis...</p>
+                  <p className="text-slate-500 text-xs mt-1">Checking heuristics + model</p>
                 </div>
               </div>
             )}
@@ -178,28 +178,28 @@ export default function ScanPage() {
                 : 'border-green-500/40 bg-green-500/5',
               )}>
                 {/* Score Header */}
-                <div className="p-5 flex items-center justify-between border-b border-white/5">
+                <div className="p-5 flex items-center justify-between border-b border-slate-200">
                   <div>
                     <span className={`px-3 py-1.5 rounded-md text-xs font-bold border ${getLabelBg(result.label)}`}>
                       {getLabelText(result.label)}
                     </span>
                     {result.language_detected && result.language_detected !== 'en' && (
-                      <span className="ml-2 px-2 py-1 rounded bg-surface-600 text-[10px] text-slate-400 font-mono">
+                      <span className="ml-2 px-2 py-1 rounded bg-surface-600 text-[10px] text-slate-500">
                         🌐 {result.language_detected.toUpperCase()}
                       </span>
                     )}
                   </div>
                   <div className="text-right">
-                    <div className="text-4xl font-black font-mono" style={{ color: scoreColor }}>
+                    <div className="text-4xl font-black" style={{ color: scoreColor }}>
                       {result.score}
                     </div>
-                    <div className="text-[10px] text-slate-500 font-mono">/ 100 risk</div>
+                    <div className="text-[10px] text-slate-500">/ 100 risk</div>
                   </div>
                 </div>
 
                 {/* Risk Bar */}
-                <div className="px-5 py-3 border-b border-white/5">
-                  <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+                <div className="px-5 py-3 border-b border-slate-200">
+                  <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
                     <div
                       className="h-full rounded-full transition-all duration-1000"
                       style={{ width: `${result.score}%`, background: scoreColor }}
@@ -208,11 +208,11 @@ export default function ScanPage() {
                 </div>
 
                 {/* Reasons */}
-                <div className="p-5 border-b border-white/5">
-                  <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-3 font-mono">Detection Reasons</p>
+                <div className="p-5 border-b border-slate-200">
+                  <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-3">Detection Reasons</p>
                   <ul className="space-y-2">
                     {result.reasons.map((r, i) => (
-                      <li key={i} className="flex items-start gap-2 text-xs text-slate-400">
+                      <li key={i} className="flex items-start gap-2 text-xs text-slate-500">
                         <span style={{ color: scoreColor }} className="mt-0.5 shrink-0">▸</span>
                         {r}
                       </li>
@@ -222,16 +222,16 @@ export default function ScanPage() {
 
                 {/* Threats */}
                 {result.threats.length > 0 && (
-                  <div className="p-5 border-b border-white/5">
-                    <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-3 font-mono">Threat Categories</p>
+                  <div className="p-5 border-b border-slate-200">
+                    <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-3 ">Threat Categories</p>
                     <div className="space-y-2">
                       {result.threats.map((t, i) => (
-                        <div key={i} className="flex items-start gap-3 p-2.5 rounded-lg bg-white/3 border border-white/5">
+                        <div key={i} className="flex items-start gap-3 p-2.5 rounded-lg bg-slate-50 border border-slate-200">
                           <span className={clsx(
                             'px-1.5 py-0.5 rounded text-[9px] font-bold uppercase shrink-0',
                             t.severity === 'high' ? 'bg-red-500/20 text-red-400'
                             : t.severity === 'medium' ? 'bg-amber-500/20 text-amber-400'
-                            : 'bg-slate-500/20 text-slate-400',
+                            : 'bg-slate-500/20 text-slate-500',
                           )}>
                             {t.severity}
                           </span>
