@@ -8,6 +8,7 @@ import clsx from 'clsx';
 export default function AlertsPage() {
   const [alerts, setAlerts] = useState<AlertItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<'all' | 'phishing' | 'suspicious'>('all');
   const [expanded, setExpanded] = useState<string | null>(null);
   const [blocked, setBlocked] = useState<Record<string, boolean>>({});
@@ -15,8 +16,11 @@ export default function AlertsPage() {
   useEffect(() => {
     async function load() {
       try {
+        setError(null);
         const data = await getAlerts(200);
         setAlerts(data.alerts);
+      } catch (e: any) {
+        setError(e?.message || 'Failed to load alerts');
       } finally {
         setLoading(false);
       }
@@ -61,6 +65,13 @@ export default function AlertsPage() {
         {loading ? (
           <div className="flex items-center justify-center h-64">
             <div className="w-8 h-8 border-2 border-blue-500/30 border-t-blue-500 rounded-full animate-spin" />
+          </div>
+        ) : error ? (
+          <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-5">
+            <p className="text-red-300 text-sm font-mono">{error}</p>
+            <p className="text-red-400/80 text-xs mt-2 font-mono">
+              Verify NEXT_PUBLIC_API_BASE_URL in veltrix-dashboard/.env.local.
+            </p>
           </div>
         ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-64 text-slate-600">
