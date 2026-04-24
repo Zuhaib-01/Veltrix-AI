@@ -72,6 +72,17 @@ python main.py
 3. Load unpacked -> select `veltrix-extension/`
 4. Open Gmail
 
+### 3. Web Dashboard
+
+```bash
+cd veltrix-dashboard
+cp .env.example .env.local
+npm install
+npm run dev
+```
+
+Set NEXT_PUBLIC_API_BASE_URL in .env.local to your backend URL.
+
 ## Project Structure
 
 ```
