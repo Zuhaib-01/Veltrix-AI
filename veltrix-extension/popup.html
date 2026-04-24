@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Veltrix AI</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      width: 320px;
+      font-family: 'Inter', -apple-system, sans-serif;
+      background: #ffffff;
+      color: #111111;
+    }
+
+    .header {
+      padding: 14px 16px;
+      border-bottom: 1px solid #e5e7eb;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .logo {
+      width: 32px; height: 32px;
+      background: #111111;
+      border-radius: 7px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; font-weight: 700; color: #fff;
+      flex-shrink: 0;
+    }
+
+    .header-info { flex: 1; }
+    .header-info h1 { font-size: 14px; font-weight: 700; color: #111111; }
+    .header-info p  { font-size: 10px; color: #9ca3af; margin-top: 1px; }
+
+    .status-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: #22c55e;
+      box-shadow: 0 0 5px #22c55e;
+      animation: pulse 2s infinite;
+      flex-shrink: 0;
+    }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+    .toggle-row {
+      padding: 11px 16px;
+      border-bottom: 1px solid #e5e7eb;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #fafafa;
+    }
+
+    .toggle-label { font-size: 12px; font-weight: 600; color: #111111; }
+    .toggle-sub   { font-size: 10px; color: #9ca3af; margin-top: 1px; }
+
+    .toggle-switch {
+      position: relative; width: 40px; height: 22px;
+      flex-shrink: 0; cursor: pointer;
+    }
+    .toggle-switch input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider {
+      position: absolute; inset: 0; border-radius: 22px;
+      background: #d1d5db; transition: background .22s;
+    }
+    .toggle-slider::before {
+      content: ''; position: absolute;
+      width: 16px; height: 16px; left: 3px; top: 3px;
+      border-radius: 50%; background: white;
+      transition: transform .22s;
+      box-shadow: 0 1px 3px rgba(0,0,0,.2);
+    }
+    .toggle-switch input:checked + .toggle-slider { background: #111111; }
+    .toggle-switch input:checked + .toggle-slider::before { transform: translateX(18px); }
+
+    .quick-stats-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 16px 0;
+    }
+
+    .quick-label {
+      font-size: 10px; font-weight: 600;
+      color: #9ca3af; text-transform: uppercase; letter-spacing: .8px;
+    }
+
+    .rescan-btn {
+      font-size: 10px; font-weight: 600;
+      color: #111111;
+      background: #f3f4f6;
+      border: 1px solid #e5e7eb;
+      border-radius: 5px;
+      padding: 3px 10px;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background .15s;
+      display: flex; align-items: center; gap: 4px;
+    }
+    .rescan-btn:hover    { background: #e5e7eb; }
+    .rescan-btn:disabled { opacity: .4; cursor: not-allowed; }
+    .rescan-btn .spin   { display: none; }
+    .rescan-btn.scanning .spin   { display: inline-block; }
+    .rescan-btn.scanning .arrow  { display: none; }
+
+    @keyframes rspin { to { transform: rotate(360deg); } }
+    .spin {
+      width: 10px; height: 10px;
+      border: 1.5px solid #d1d5db;
+      border-top-color: #111111;
+      border-radius: 50%;
+      animation: rspin .6s linear infinite;
+    }
+
+    .quick-stats {
+      padding: 8px 16px 10px;
+      border-bottom: 1px solid #e5e7eb;
+      display: flex;
+      gap: 0;
+    }
+
+    .qs-item {
+      flex: 1;
+      text-align: center;
+      padding: 6px 4px;
+      border-right: 1px solid #e5e7eb;
+    }
+    .qs-item:last-child { border-right: none; }
+
+    .qs-val {
+      font-size: 18px;
+      font-weight: 700;
+      line-height: 1;
+      color: #111111;
+    }
+    .qs-lbl {
+      font-size: 9px;
+      color: #9ca3af;
+      margin-top: 2px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: .4px;
+    }
+    .qs-item.threat .qs-val { color: #ef4444; }
+    .qs-item.warn   .qs-val { color: #eab308; }
+    .qs-item.ok     .qs-val { color: #22c55e; }
+
+    .dash-section {
+      padding: 12px 16px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .user-chip {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      color: #374151;
+      margin-bottom: 10px;
+    }
+    .user-chip-dot {
+      width: 18px; height: 18px;
+      border-radius: 50%;
+      background: #111111;
+      color: white;
+      font-size: 9px;
+      font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .user-chip-email {
+      font-weight: 500;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 200px;
+    }
+
+    .btn-dashboard {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px;
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background .15s, border-color .15s;
+    }
+    .btn-dashboard:hover {
+      background: #f3f4f6;
+      border-color: #d1d5db;
+    }
+
+    .btn-dashboard-left {
+      display: flex; align-items: center; gap: 8px;
+    }
+    .btn-dashboard-icon {
+      width: 28px; height: 28px;
+      background: #111111;
+      border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 700; color: #fff;
+      flex-shrink: 0;
+    }
+    .btn-dashboard-text strong {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: #111111;
+    }
+    .btn-dashboard-text span {
+      font-size: 10px;
+      color: #9ca3af;
+    }
+    .btn-dashboard-arrow {
+      color: #9ca3af;
+      font-size: 14px;
+    }
+
+    .legend {
+      padding: 8px 16px;
+      border-bottom: 1px solid #e5e7eb;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+    .legend-item {
+      display: flex; align-items: center; gap: 4px;
+      font-size: 10px; color: #6b7280; font-weight: 500;
+    }
+    .ld { width: 8px; height: 8px; border-radius: 2px; }
+    .ld-r { background: #ef4444; }
+    .ld-y { background: #eab308; }
+    .ld-g { background: #22c55e; }
+
+    .scan-area { padding: 12px 16px; }
+
+    .section-label {
+      font-size: 10px; font-weight: 600;
+      color: #9ca3af; text-transform: uppercase;
+      letter-spacing: .8px; margin-bottom: 8px;
+    }
+
+    textarea {
+      width: 100%;
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
+      color: #111111;
+      font-size: 11px;
+      padding: 8px;
+      resize: none;
+      height: 56px;
+      font-family: inherit;
+      transition: border-color .15s;
+    }
+    textarea:focus { outline: none; border-color: #111111; }
+    textarea::placeholder { color: #d1d5db; }
+
+    .url-input {
+      width: 100%;
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
+      color: #111111;
+      font-size: 11px;
+      padding: 7px 8px;
+      margin-top: 5px;
+      font-family: inherit;
+      transition: border-color .15s;
+    }
+    .url-input:focus { outline: none; border-color: #111111; }
+
+    .btn-scan {
+      width: 100%;
+      padding: 9px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 600;
+      font-family: inherit;
+      margin-top: 7px;
+      background: #111111;
+      color: #ffffff;
+      transition: opacity .15s, transform .15s;
+    }
+    .btn-scan:hover   { opacity: .85; transform: translateY(-1px); }
+    .btn-scan:active  { transform: translateY(0); }
+    .btn-scan:disabled{ opacity: .35; cursor: not-allowed; transform: none; }
+
+    .result-card {
+      margin: 0 16px 12px;
+      padding: 10px 12px;
+      border-radius: 7px;
+      display: none;
+      animation: fadeIn .25s ease-out;
+      border: 1px solid #e5e7eb;
+    }
+    @keyframes fadeIn {
+      from { opacity:0; transform:translateY(-5px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+    .result-card.phishing  { background:#fff5f5; border-color:#ef4444; }
+    .result-card.suspicious{ background:#fffbeb; border-color:#eab308; }
+    .result-card.safe      { background:#f0fdf4; border-color:#22c55e; }
+
+    .result-head { display:flex; align-items:center; gap:7px; margin-bottom:6px; }
+    .result-badge {
+      font-size:10px; font-weight:700; padding:2px 9px;
+      border-radius:10px; color:white;
+    }
+    .result-badge.phishing  { background:#ef4444; }
+    .result-badge.suspicious{ background:#eab308; }
+    .result-badge.safe      { background:#22c55e; }
+    .result-score { margin-left:auto; font-size:18px; font-weight:700; }
+    .result-score.phishing  { color:#ef4444; }
+    .result-score.suspicious{ color:#eab308; }
+    .result-score.safe      { color:#22c55e; }
+    .result-reasons { font-size:10px; color:#374151; line-height:1.7; }
+    .result-reasons div::before { content:"* "; font-weight:700; }
+
+    .loading {
+      text-align:center; padding:12px;
+      font-size:11px; color:#9ca3af; display:none;
+    }
+    .spinner {
+      display:inline-block; width:12px; height:12px;
+      border:2px solid #e5e7eb; border-top-color:#111111;
+      border-radius:50%; animation:spin .7s linear infinite;
+      margin-right:5px; vertical-align:middle;
+    }
+    @keyframes spin { to { transform:rotate(360deg); } }
+
+    .footer {
+      padding: 8px 16px;
+      font-size: 9px; color: #d1d5db;
+      text-align: center;
+      border-top: 1px solid #e5e7eb;
+    }
+
+    .blocklist-section {
+      padding: 10px 16px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    .blocklist-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+    .blocklist-count {
+      font-size: 10px;
+      font-weight: 600;
+      color: #9ca3af;
+      background: #f3f4f6;
+      padding: 1px 7px;
+      border-radius: 10px;
+    }
+    .blocklist-items {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      max-height: 120px;
+      overflow-y: auto;
+    }
+    .blocklist-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 5px 8px;
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      border-radius: 6px;
+      font-size: 11px;
+      color: #374151;
+    }
+    .blocklist-item-email {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 190px;
+      font-weight: 500;
+    }
+    .blocklist-unblock-btn {
+      font-size: 9px;
+      font-weight: 600;
+      color: #ef4444;
+      background: none;
+      border: 1px solid #ef4444;
+      border-radius: 4px;
+      padding: 2px 8px;
+      cursor: pointer;
+      font-family: inherit;
+      flex-shrink: 0;
+      transition: background .15s, color .15s;
+    }
+    .blocklist-unblock-btn:hover {
+      background: #ef4444;
+      color: #fff;
+    }
+    .blocklist-empty {
+      font-size: 10px;
+      color: #9ca3af;
+      text-align: center;
+      padding: 6px 0;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div class="logo">V</div>
+    <div class="header-info">
+      <h1>Veltrix AI</h1>
+      <p>Phishing Shield v1.0</p>
+    </div>
+    <div class="status-dot" id="statusDot" title="Checking..."></div>
+  </div>
+
+  <div class="toggle-row">
+    <div class="toggle-text">
+      <div class="toggle-label" id="toggleLabel">Protection: ON</div>
+      <div class="toggle-sub">Auto-scanning Gmail</div>
+    </div>
+    <label class="toggle-switch" title="Toggle phishing detection">
+      <input type="checkbox" id="enableToggle" checked>
+      <span class="toggle-slider"></span>
+    </label>
+  </div>
+
+  <div class="quick-stats-header">
+    <span class="quick-label">Session Stats</span>
+    <button class="rescan-btn" id="rescanBtn" title="Rescan Gmail inbox">
+      <span class="arrow">&#8635;</span>
+      <span class="spin"></span>
+      Rescan
+    </button>
+  </div>
+
+  <div class="quick-stats">
+    <div class="qs-item">
+      <div class="qs-val" id="qs-total">0</div>
+      <div class="qs-lbl">Scanned</div>
+    </div>
+    <div class="qs-item threat">
+      <div class="qs-val" id="qs-phishing">0</div>
+      <div class="qs-lbl">Phishing</div>
+    </div>
+    <div class="qs-item warn">
+      <div class="qs-val" id="qs-suspicious">0</div>
+      <div class="qs-lbl">Suspect</div>
+    </div>
+    <div class="qs-item ok">
+      <div class="qs-val" id="qs-safe">0</div>
+      <div class="qs-lbl">Safe</div>
+    </div>
+  </div>
+
+  <div class="dash-section">
+    <div class="user-chip">
+      <div class="user-chip-dot" id="userInitial">?</div>
+      <span class="user-chip-email" id="userEmail">Open Gmail to detect account</span>
+    </div>
+    <button class="btn-dashboard" id="openDashboard">
+      <div class="btn-dashboard-left">
+        <div class="btn-dashboard-icon">D</div>
+        <div class="btn-dashboard-text">
+          <strong>My Dashboard</strong>
+          <span>View your full scan report</span>
+        </div>
+      </div>
+      <span class="btn-dashboard-arrow">&rsaquo;</span>
+    </button>
+  </div>
+
+  <div class="legend">
+    <div class="legend-item"><div class="ld ld-r"></div> Phishing</div>
+    <div class="legend-item"><div class="ld ld-y"></div> Suspicious</div>
+    <div class="legend-item"><div class="ld ld-g"></div> Safe</div>
+    <div class="legend-item" style="margin-left:auto;font-size:9px;color:#d1d5db;">Links blocked</div>
+  </div>
+
+  <div class="scan-area">
+    <div class="section-label">Manual Scan</div>
+    <textarea id="textInput" placeholder="Paste suspicious email or SMS text..."></textarea>
+    <input class="url-input" id="urlInput" type="text" placeholder="URL (optional)" />
+    <button class="btn-scan" id="scanBtn">Analyze</button>
+  </div>
+
+  <div class="loading" id="loading">
+    <span class="spinner"></span>Analyzing...
+  </div>
+
+  <div class="result-card" id="resultCard">
+    <div class="result-head">
+      <span class="result-badge" id="resultLabel">-</span>
+      <span class="result-score" id="resultScore">0</span>
+    </div>
+    <div class="result-reasons" id="resultReasons"></div>
+  </div>
+
+  <div class="blocklist-section" id="blocklistSection" style="display:none;">
+    <div class="blocklist-header">
+      <span class="section-label" style="margin:0;">Blocked Senders</span>
+      <span class="blocklist-count" id="blocklistCount">0</span>
+    </div>
+    <div class="blocklist-items" id="blocklistItems"></div>
+  </div>
+
+  <div class="footer">Veltrix AI v1.0 - Privacy-First</div>
+
+  <script src="config.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>
