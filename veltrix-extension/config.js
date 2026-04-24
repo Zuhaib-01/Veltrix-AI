@@ -1,27 +1,26 @@
-/**
- * Veltrix AI v1.0 - Runtime Configuration
- *
- * Set the backend URL via chrome.storage.local:
- *   chrome.storage.local.set({ veltrix_api_url: "https://api.yourdomain.com" })
- *
- * Loaded first in every context (content, popup, dashboard, background).
- * All scripts read from VELTRIX_CFG. Never hardcode URLs elsewhere.
- */
-
 const VELTRIX_CFG = Object.freeze({
-  DEFAULT_API_URL:    "https://veltrix-ai-1qmb.onrender.com",
-  DEBOUNCE_MS:        800,
-  API_TIMEOUT_MS:     8000,
-  MAX_LOG_ENTRIES:    100,
+  DEFAULT_API_URL: "https://veltrix-ai-1qmb.onrender.com",
+  DEBOUNCE_MS: 800,
+  API_TIMEOUT_MS: 8000,
+  MAX_LOG_ENTRIES: 100,
   MAX_URLS_PER_EMAIL: 15,
-  MAX_BODY_CHARS:     3000,
+  MAX_BODY_CHARS: 3000,
 });
 
 async function getApiUrl() {
   try {
-    const d = await chrome.storage.local.get("veltrix_api_url");
-    return (d.veltrix_api_url || VELTRIX_CFG.DEFAULT_API_URL).replace(/\/$/, "");
-  } catch (_) {
+    const data = await chrome.storage.local.get("veltrix_api_url");
+
+    // If not set → store default automatically
+    if (!data.veltrix_api_url) {
+      await chrome.storage.local.set({
+        veltrix_api_url: VELTRIX_CFG.DEFAULT_API_URL
+      });
+      return VELTRIX_CFG.DEFAULT_API_URL;
+    }
+
+    return data.veltrix_api_url.replace(/\/$/, "");
+  } catch (e) {
     return VELTRIX_CFG.DEFAULT_API_URL;
   }
 }
