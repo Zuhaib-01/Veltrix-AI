@@ -13,6 +13,7 @@ const elUserEmail  = document.getElementById("userEmail");
 const elUserInit   = document.getElementById("userInitial");
 const elDash       = document.getElementById("openDashboard");
 const elStatusDot  = document.getElementById("statusDot");
+const elMlStatus   = document.getElementById("mlStatusText");
 const elTotal      = document.getElementById("qs-total");
 const elPhishing   = document.getElementById("qs-phishing");
 const elSuspicious = document.getElementById("qs-suspicious");
@@ -157,11 +158,26 @@ elDash.addEventListener("click", () => {
 async function checkHealth() {
   try {
     const base = await getApi();
-    const res = await fetch(`${base}/health`, { signal: AbortSignal.timeout(3000) });
+    const res = await fetch(`${base}/health`, {
+      signal: AbortSignal.timeout(VELTRIX_CFG.API_TIMEOUT_MS),
+    });
     if (res.ok) {
-      elStatusDot.style.background = "#22c55e";
-      elStatusDot.style.boxShadow  = "0 0 5px #22c55e";
-      elStatusDot.title            = "Backend online";
+      const data = await res.json();
+      if (data.ml_connected === false) {
+        elStatusDot.style.background = "#f59e0b";
+        elStatusDot.style.boxShadow  = "0 0 5px #f59e0b";
+        elStatusDot.title            = "Backend online, ML model unavailable";
+        if (elMlStatus) {
+          elMlStatus.textContent = data.ml_reason
+            ? `Rules only: ${data.ml_reason}`
+            : "Rules only: ML model unavailable";
+        }
+      } else {
+        elStatusDot.style.background = "#22c55e";
+        elStatusDot.style.boxShadow  = "0 0 5px #22c55e";
+        elStatusDot.title            = "Backend online, ML connected";
+        if (elMlStatus) elMlStatus.textContent = "ML model connected";
+      }
     } else {
       setOffline();
     }
@@ -174,6 +190,7 @@ function setOffline() {
   elStatusDot.style.background = "#ef4444";
   elStatusDot.style.boxShadow  = "0 0 5px #ef4444";
   elStatusDot.title            = "Backend offline - using local scan";
+  if (elMlStatus) elMlStatus.textContent = "Backend offline: local scan only";
 }
 
 elScanBtn.addEventListener("click", async () => {

@@ -86,9 +86,25 @@ async function blockUrl(url) {
 async function healthCheck() {
   try {
     const base = await api();
-    const res = await fetch(`${base}/health`, { signal: AbortSignal.timeout(3000) });
-    return { online: res.ok };
-  } catch (_) { return { online: false }; }
+    const res = await fetch(`${base}/health`, {
+      signal: AbortSignal.timeout(VELTRIX_CFG.API_TIMEOUT_MS),
+    });
+    if (!res.ok) return { online: false, mlConnected: false, mode: "offline" };
+    const data = await res.json();
+    return {
+      online: true,
+      mlConnected: data.ml_connected !== false,
+      mode: data.mode || (data.ml_connected === false ? "rules_only" : "ml"),
+      reason: data.ml_reason || "",
+    };
+  } catch (_) {
+    return {
+      online: false,
+      mlConnected: false,
+      mode: "offline",
+      reason: "Backend offline",
+    };
+  }
 }
 
 let threatCount = 0;

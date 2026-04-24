@@ -9,6 +9,7 @@ let scanStats     = { total: 0, phishing: 0, suspicious: 0, safe: 0 };
 let enabled       = true;
 let userEmail     = null;
 let blockedSenders = [];
+let backendState  = { online: null, mlConnected: null, reason: "" };
 
 // --- Boot ---
 (async () => {
@@ -21,6 +22,8 @@ let blockedSenders = [];
 
   injectStyles();
   createIndicator();
+  refreshBackendStatus();
+  setInterval(refreshBackendStatus, 60000);
   resolveUser();
   setTimeout(resolveUser, 3000);
   if (enabled) scan();
@@ -83,10 +86,41 @@ async function callBackendML(text, urls, sender, subject) {
       signal: AbortSignal.timeout(VELTRIX_CFG.API_TIMEOUT_MS),
     });
     if (!res.ok) return null;
+    backendState.online = true;
     const json = await res.json();
     if (json.label) json.label = json.label.toLowerCase();
     return json;
-  } catch (_) { return null; }
+  } catch (_) {
+    backendState = {
+      online: false,
+      mlConnected: false,
+      reason: "Backend offline",
+    };
+    updateIndicator();
+    return null;
+  }
+}
+
+async function refreshBackendStatus() {
+  try {
+    const res = await fetch(`${API_URL}/health`, {
+      signal: AbortSignal.timeout(VELTRIX_CFG.API_TIMEOUT_MS),
+    });
+    if (!res.ok) throw new Error("offline");
+    const data = await res.json();
+    backendState = {
+      online: true,
+      mlConnected: data.ml_connected !== false,
+      reason: data.ml_reason || "",
+    };
+  } catch (_) {
+    backendState = {
+      online: false,
+      mlConnected: false,
+      reason: "Backend offline",
+    };
+  }
+  updateIndicator();
 }
 
 // --- Combined ML + rule-based analysis ---
@@ -755,14 +789,30 @@ function updateIndicator() {
   const threats = scanStats.phishing + scanStats.suspicious;
   const txt = document.getElementById("vltx-txt");
   if (txt) {
+    const modeText = !backendState.online
+      ? "local only"
+      : backendState.mlConnected === false
+        ? "rules only"
+        : "ML connected";
     txt.textContent = threats > 0
-      ? `${scanStats.total} scanned | ${threats} threats`
-      : `${scanStats.total} scanned`;
+      ? `${scanStats.total} scanned | ${threats} threats | ${modeText}`
+      : `${scanStats.total} scanned | ${modeText}`;
   }
   const dot = document.getElementById("vltx-dot");
-  if (dot && threats > 0) {
-    dot.style.background  = "#ef4444";
-    dot.style.boxShadow   = "0 0 5px #ef4444";
+  if (dot) {
+    if (!backendState.online) {
+      dot.style.background = "#f59e0b";
+      dot.style.boxShadow = "0 0 5px #f59e0b";
+    } else if (threats > 0) {
+      dot.style.background = "#ef4444";
+      dot.style.boxShadow = "0 0 5px #ef4444";
+    } else if (backendState.mlConnected === false) {
+      dot.style.background = "#f59e0b";
+      dot.style.boxShadow = "0 0 5px #f59e0b";
+    } else {
+      dot.style.background = "#22c55e";
+      dot.style.boxShadow = "0 0 5px #22c55e";
+    }
   }
 }
 

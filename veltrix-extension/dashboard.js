@@ -5,6 +5,7 @@ const $ = (id) => document.getElementById(id);
 let currentEmail = null;
 let currentStats = { total: 0, phishing: 0, suspicious: 0, safe: 0 };
 let threatLog    = [];
+let backendStatus = { online: false, mlConnected: false, mode: "offline", reason: "" };
 
 async function init() {
   showLoading(true);
@@ -29,6 +30,7 @@ async function init() {
   setUserUI(currentEmail);
   await loadUserStats();
   await loadThreatLog();
+  await loadBackendStatus();
   await loadProtectionStatus();
   await loadBlockedSenders();
 
@@ -51,6 +53,30 @@ async function loadThreatLog() {
   threatLog = data[key] || [];
 }
 
+async function loadBackendStatus() {
+  try {
+    const base = await getApiUrl();
+    const res = await fetch(`${base}/health`, {
+      signal: AbortSignal.timeout(VELTRIX_CFG.API_TIMEOUT_MS),
+    });
+    if (!res.ok) throw new Error("offline");
+    const data = await res.json();
+    backendStatus = {
+      online: true,
+      mlConnected: data.ml_connected !== false,
+      mode: data.mode || (data.ml_connected === false ? "rules_only" : "ml"),
+      reason: data.ml_reason || "",
+    };
+  } catch (_) {
+    backendStatus = {
+      online: false,
+      mlConnected: false,
+      mode: "offline",
+      reason: "Backend offline",
+    };
+  }
+}
+
 async function loadProtectionStatus() {
   const d  = await chrome.storage.local.get("veltrix_enabled");
   const on = d.veltrix_enabled !== false;
@@ -60,11 +86,27 @@ async function loadProtectionStatus() {
   const lbl  = $("statusToggleLabel");
   if (on) {
     dot.classList.remove("off");
-    txt.textContent = "Protection Active";
-    sub.textContent = "Scanning Gmail in real time";
     lbl.textContent = "ON";
+    if (!backendStatus.online) {
+      dot.style.background = "#ef4444";
+      dot.style.boxShadow = "0 0 10px rgba(239,68,68,.45)";
+      txt.textContent = "Local Rules Only";
+      sub.textContent = "Backend offline. Extension is using local fallback detection.";
+    } else if (!backendStatus.mlConnected) {
+      dot.style.background = "#f59e0b";
+      dot.style.boxShadow = "0 0 10px rgba(245,158,11,.45)";
+      txt.textContent = "Rules Active";
+      sub.textContent = backendStatus.reason || "Backend online, but ML model is not connected.";
+    } else {
+      dot.style.background = "#34d399";
+      dot.style.boxShadow = "0 0 10px rgba(52,211,153,.45)";
+      txt.textContent = "Protection Active";
+      sub.textContent = "ML model connected and scanning Gmail in real time";
+    }
   } else {
     dot.classList.add("off");
+    dot.style.background = "";
+    dot.style.boxShadow = "";
     txt.textContent = "Protection Paused";
     sub.textContent = "Turn on via the extension popup";
     lbl.textContent = "OFF";
@@ -211,6 +253,7 @@ $("refreshBtn").addEventListener("click", async () => {
   $("refreshBtn").disabled    = true;
   await loadUserStats();
   await loadThreatLog();
+  await loadBackendStatus();
   await loadProtectionStatus();
   animateDashboard();
   $("refreshBtn").textContent = "Refresh";
