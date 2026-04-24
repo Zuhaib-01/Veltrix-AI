@@ -9,7 +9,7 @@
  */
 
 const VELTRIX_CFG = Object.freeze({
-  DEFAULT_API_URL:    "http://localhost:8000",
+  DEFAULT_API_URL:    "https://veltrix-ai-1qmb.onrender.com",
   DEBOUNCE_MS:        800,
   API_TIMEOUT_MS:     8000,
   MAX_LOG_ENTRIES:    100,
