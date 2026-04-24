@@ -29,16 +29,16 @@ export default function AlertsPage() {
   const filtered = alerts.filter(a => filter === 'all' || a.label === filter);
 
   return (
-    <div className="flex min-h-screen bg-[#050810] grid-bg">
+    <div className="flex min-h-screen bg-slate-200">
       <Sidebar />
-      <main className="ml-[220px] flex-1 p-8">
+      <main className="ml-[220px] flex-1 p-8 bg-slate-200 bg-[radial-gradient(circle_at_top,rgba(59,130,246,0.04),transparent_60%)]">
         <div className="mb-6 flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-slate-100 font-mono">Alerts History</h1>
+            <h1 className="text-3xl font-bold text-slate-900">Alerts History</h1>
             <p className="text-slate-500 text-sm mt-1">{alerts.length} total alerts recorded</p>
           </div>
           {/* Filter */}
-          <div className="flex bg-[#0f172a] border border-[#1e3a5f] rounded-lg p-1 gap-1">
+          <div className="flex bg-white border border-slate-200 rounded-lg p-1 gap-1 shadow-sm">
             {(['all', 'phishing', 'suspicious'] as const).map(f => (
               <button
                 key={f}
@@ -46,10 +46,10 @@ export default function AlertsPage() {
                 className={clsx(
                   'px-3 py-1.5 rounded text-xs font-semibold transition-all capitalize',
                   filter === f
-                    ? f === 'phishing' ? 'bg-red-500/20 text-red-400'
-                    : f === 'suspicious' ? 'bg-amber-500/20 text-amber-400'
-                    : 'bg-blue-600/20 text-blue-400'
-                    : 'text-slate-500 hover:text-slate-300',
+                    ? f === 'phishing' ? 'bg-red-50 text-red-600'
+                      : f === 'suspicious' ? 'bg-amber-50 text-amber-600'
+                        : 'bg-blue-50 text-blue-600'
+                    : 'text-slate-500 hover:text-slate-900',
                 )}
               >
                 {f}
@@ -112,8 +112,8 @@ function AlertCard({
     <div className={clsx(
       'rounded-xl border transition-all',
       alert.label === 'phishing' ? 'border-red-500/20 bg-[#0f172a]'
-      : alert.label === 'suspicious' ? 'border-amber-500/20 bg-[#0f172a]'
-      : 'border-[#1e3a5f] bg-[#0f172a]',
+        : alert.label === 'suspicious' ? 'border-amber-500/20 bg-[#0f172a]'
+          : 'border-[#1e3a5f] bg-[#0f172a]',
     )}>
       <button
         onClick={onToggle}
@@ -145,7 +145,7 @@ function AlertCard({
               <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-2 font-mono">Detection Reasons</p>
               <ul className="space-y-1.5">
                 {alert.reasons.map((r, i) => (
-                  <li key={i} className="flex items-start gap-2 text-xs text-slate-400">
+                  <li key={i} className="flex items-start gap-2 text-xs text-slate-500">
                     <span style={{ color: scoreColor }} className="shrink-0">▸</span>
                     {r}
                   </li>
@@ -155,8 +155,8 @@ function AlertCard({
             <div>
               <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-2 font-mono">Metadata</p>
               <div className="space-y-1.5 text-xs font-mono">
-                <div className="flex gap-2"><span className="text-slate-600">Source:</span><span className="text-slate-400">{alert.source}</span></div>
-                <div className="flex gap-2"><span className="text-slate-600">Time:</span><span className="text-slate-400">{fullTime}</span></div>
+                <div className="flex gap-2"><span className="text-slate-600">Source:</span><span className="text-slate-500">{alert.source}</span></div>
+                <div className="flex gap-2"><span className="text-slate-600">Time:</span><span className="text-slate-500">{fullTime}</span></div>
                 <div className="flex gap-2"><span className="text-slate-600">Score:</span><span style={{ color: scoreColor }}>{alert.score}/100</span></div>
               </div>
 
