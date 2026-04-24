@@ -13,6 +13,7 @@ const elUserEmail  = document.getElementById("userEmail");
 const elUserInit   = document.getElementById("userInitial");
 const elDash       = document.getElementById("openDashboard");
 const elStatusDot  = document.getElementById("statusDot");
+const elBackendStatus = document.getElementById("backendStatusText");
 const elMlStatus   = document.getElementById("mlStatusText");
 const elTotal      = document.getElementById("qs-total");
 const elPhishing   = document.getElementById("qs-phishing");
@@ -156,41 +157,45 @@ elDash.addEventListener("click", () => {
 });
 
 async function checkHealth() {
-  try {
-    const base = await getApi();
-    const res = await fetch(`${base}/health`, {
-      signal: AbortSignal.timeout(VELTRIX_CFG.API_TIMEOUT_MS),
-    });
-    if (res.ok) {
-      const data = await res.json();
-      if (data.ml_connected === false) {
-        elStatusDot.style.background = "#f59e0b";
-        elStatusDot.style.boxShadow  = "0 0 5px #f59e0b";
-        elStatusDot.title            = "Backend online, ML model unavailable";
-        if (elMlStatus) {
-          elMlStatus.textContent = data.ml_reason
-            ? `Rules only: ${data.ml_reason}`
-            : "Rules only: ML model unavailable";
-        }
-      } else {
-        elStatusDot.style.background = "#22c55e";
-        elStatusDot.style.boxShadow  = "0 0 5px #22c55e";
-        elStatusDot.title            = "Backend online, ML connected";
-        if (elMlStatus) elMlStatus.textContent = "ML model connected";
-      }
-    } else {
-      setOffline();
-    }
-  } catch {
-    setOffline();
-  }
+  renderHealthStatus(await getBackendHealth());
 }
 
-function setOffline() {
-  elStatusDot.style.background = "#ef4444";
-  elStatusDot.style.boxShadow  = "0 0 5px #ef4444";
-  elStatusDot.title            = "Backend offline - using local scan";
-  if (elMlStatus) elMlStatus.textContent = "Backend offline: local scan only";
+function setConnectionText(el, text, tone) {
+  if (!el) return;
+  el.textContent = text;
+  el.className = `connection-value ${tone}`;
+}
+
+function renderHealthStatus(status) {
+  if (!status.online) {
+    elStatusDot.style.background = "#ef4444";
+    elStatusDot.style.boxShadow  = "0 0 5px #ef4444";
+    elStatusDot.title            = "Backend offline";
+    setConnectionText(elBackendStatus, "Offline", "offline");
+    setConnectionText(elMlStatus, "Unavailable (backend offline)", "offline");
+    return;
+  }
+
+  setConnectionText(elBackendStatus, "Connected", "online");
+  if (status.mlConnected) {
+    elStatusDot.style.background = "#22c55e";
+    elStatusDot.style.boxShadow  = "0 0 5px #22c55e";
+    elStatusDot.title            = "Backend and ML connected";
+    setConnectionText(elMlStatus, "Connected", "online");
+    return;
+  }
+
+  elStatusDot.style.background = "#f59e0b";
+  elStatusDot.style.boxShadow  = "0 0 5px #f59e0b";
+  elStatusDot.title            = "Backend connected, ML unavailable";
+  setConnectionText(elMlStatus, status.reason || "Offline", "warn");
+}
+
+async function analyzeLocally(text, url) {
+  return runLocalDetection({
+    text: text || url,
+    urls: url ? [url] : [],
+  });
 }
 
 elScanBtn.addEventListener("click", async () => {
@@ -215,9 +220,11 @@ elScanBtn.addEventListener("click", async () => {
       body,
       signal:  AbortSignal.timeout(10000),
     });
+    if (!res.ok) throw new Error("backend_unavailable");
     showResult(await res.json());
   } catch {
-    showError("Cannot reach Veltrix backend. Check that it is running.");
+    showResult(await analyzeLocally(text, url));
+    checkHealth();
   } finally {
     setLoading(false);
   }
@@ -237,6 +244,12 @@ function showResult(r) {
     d.textContent = txt;
     elResReasons.appendChild(d);
   });
+
+  if (r.offline) {
+    const d = document.createElement("div");
+    d.textContent = "Offline rules were used for this scan";
+    elResReasons.appendChild(d);
+  }
 }
 
 function showError(msg) {

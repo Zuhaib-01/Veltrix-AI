@@ -37,6 +37,31 @@
     .header-info h1 { font-size: 14px; font-weight: 700; color: #111111; }
     .header-info p  { font-size: 10px; color: #9ca3af; margin-top: 1px; }
 
+    .connection-stack {
+      margin-top: 4px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .connection-line {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 10px;
+      color: #6b7280;
+    }
+    .connection-key {
+      min-width: 52px;
+      font-weight: 600;
+      color: #374151;
+    }
+    .connection-value {
+      font-weight: 500;
+    }
+    .connection-value.online { color: #16a34a; }
+    .connection-value.warn { color: #d97706; }
+    .connection-value.offline { color: #dc2626; }
+
     .status-dot {
       width: 8px; height: 8px; border-radius: 50%;
       background: #22c55e;
@@ -421,8 +446,15 @@
     <div class="header-info">
       <h1>Veltrix AI</h1>
       <p>Phishing Shield v1.0</p>
-      <div id="mlStatusText" style="font-size:10px;color:#6b7280;margin-top:2px;">
-        Checking ML connection...
+      <div class="connection-stack">
+        <div class="connection-line">
+          <span class="connection-key">Backend</span>
+          <span class="connection-value" id="backendStatusText">Checking...</span>
+        </div>
+        <div class="connection-line">
+          <span class="connection-key">ML Model</span>
+          <span class="connection-value" id="mlStatusText">Checking...</span>
+        </div>
       </div>
     </div>
     <div class="status-dot" id="statusDot" title="Checking..."></div>

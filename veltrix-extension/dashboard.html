@@ -187,6 +187,33 @@
       font-size: 11px; color: var(--muted);
     }
 
+    .status-connections {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+    .status-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: #fff;
+      font-size: 10px;
+      font-weight: 600;
+      color: #374151;
+    }
+    .status-chip-label {
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .4px;
+    }
+    .status-chip-value.online { color: var(--green); }
+    .status-chip-value.warn { color: #d97706; }
+    .status-chip-value.offline { color: var(--red); }
+
     /* ── Divider bar ─────────────────────────────────────────────── */
     .divider {
       height: 1px; background: var(--border);
@@ -346,6 +373,16 @@
         <div class="status-text">
           <strong id="statusText">Protection Active</strong>
           <span id="statusSub">Scanning Gmail in real time</span>
+          <div class="status-connections">
+            <div class="status-chip">
+              <span class="status-chip-label">Backend</span>
+              <span class="status-chip-value" id="backendConnectionText">Checking...</span>
+            </div>
+            <div class="status-chip">
+              <span class="status-chip-label">ML</span>
+              <span class="status-chip-value" id="mlConnectionText">Checking...</span>
+            </div>
+          </div>
         </div>
       </div>
       <div class="status-toggle">

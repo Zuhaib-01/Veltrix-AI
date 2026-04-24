@@ -102,24 +102,7 @@ async function callBackendML(text, urls, sender, subject) {
 }
 
 async function refreshBackendStatus() {
-  try {
-    const res = await fetch(`${API_URL}/health`, {
-      signal: AbortSignal.timeout(VELTRIX_CFG.API_TIMEOUT_MS),
-    });
-    if (!res.ok) throw new Error("offline");
-    const data = await res.json();
-    backendState = {
-      online: true,
-      mlConnected: data.ml_connected !== false,
-      reason: data.ml_reason || "",
-    };
-  } catch (_) {
-    backendState = {
-      online: false,
-      mlConnected: false,
-      reason: "Backend offline",
-    };
-  }
+  backendState = await getBackendHealth();
   updateIndicator();
 }
 
@@ -137,7 +120,7 @@ async function analyzeText(text, urls = [], sender = "", subject = "") {
 
   const [mlResult, ruleResult] = await Promise.all([
     callBackendML(text, urls, sender, subject),
-    Promise.resolve(localFallback(text, urls)),
+    Promise.resolve(localFallback(text, urls, sender, subject)),
   ]);
 
   if (!mlResult) return { ...ruleResult, offline: true };
@@ -168,135 +151,8 @@ async function analyzeText(text, urls = [], sender = "", subject = "") {
 }
 
 // --- Local fallback (offline) ---
-const PHISHING_KW = [
-  "verify your account", "confirm your password", "update your payment",
-  "your account has been suspended", "unusual sign-in", "click here to verify",
-  "urgent action required", "your account will be closed",
-  "one-time password", "otp", "wire transfer", "you have won",
-  "claim your prize", "lottery", "bank account", "billing information",
-  "immediate action", "reset your password", "validate your information",
-  "confirm your identity", "security alert", "unauthorized access",
-  "account has been limited", "update billing", "payment declined",
-];
-const SHORT_DOMAINS = [
-  "bit.ly","tinyurl.com","goo.gl","ow.ly","t.co","short.link",
-  "cutt.ly","rb.gy","is.gd","tiny.cc","buff.ly","adf.ly",
-  "rebrand.ly","v.gd","shorturl.at","tny.im",
-];
-const SUSPICIOUS_TLDS = [
-  ".tk",".ml",".ga",".cf",".gq",".xyz",".top",".club",
-  ".info",".biz",".pw",".cc",".ws",".su",".ru",".cn",
-];
-const BRAND_DOMAINS = {
-  "paypal":   "paypal.com",
-  "google":   "google.com",
-  "apple":    "apple.com",
-  "microsoft":"microsoft.com",
-  "amazon":   "amazon.com",
-  "netflix":  "netflix.com",
-  "facebook": "facebook.com",
-  "instagram":"instagram.com",
-  "linkedin": "linkedin.com",
-  "twitter":  "twitter.com",
-  "bank":     null,
-  "secure":   null,
-  "login":    null,
-};
-
-function localFallback(text = "", urls = []) {
-  const body = text.toLowerCase();
-  const reasons = [];
-  let score = 0;
-
-  for (const kw of PHISHING_KW) {
-    if (body.includes(kw)) {
-      reasons.push(`Contains phrase: "${kw}"`);
-      score += 18;
-      if (score >= 70) break;
-    }
-  }
-
-  // Extract URLs from text if none passed
-  let allUrls = urls && urls.length > 0 ? [...urls] : [];
-  const textUrls = (text.match(/https?:\/\/[^\s<>"']+/gi) || []);
-  for (const tu of textUrls) {
-    if (!allUrls.includes(tu)) allUrls.push(tu);
-  }
-  allUrls = allUrls.slice(0, VELTRIX_CFG.MAX_URLS_PER_EMAIL);
-
-  for (const url of allUrls) {
-    try {
-      const parsed = new URL(url);
-      const h = parsed.hostname.toLowerCase();
-      const fullUrl = url.toLowerCase();
-
-      // Shortened URLs
-      if (SHORT_DOMAINS.some(d => h.includes(d))) {
-        reasons.push(`Shortened URL: ${h}`);
-        score += 25;
-      }
-
-      // IP address links
-      if (/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(h)) {
-        reasons.push(`IP-address link: ${h}`);
-        score += 35;
-      }
-
-      // Suspicious TLDs
-      for (const tld of SUSPICIOUS_TLDS) {
-        if (h.endsWith(tld)) {
-          reasons.push(`Suspicious TLD: ${tld}`);
-          score += 20;
-          break;
-        }
-      }
-
-      // Brand impersonation
-      for (const [brand, legit] of Object.entries(BRAND_DOMAINS)) {
-        if (h.includes(brand) && legit && !h.endsWith(legit)) {
-          reasons.push(`Brand impersonation: ${h} (not ${legit})`);
-          score += 40;
-          break;
-        }
-      }
-
-      // Excessive subdomains
-      if (h.split(".").length > 4) {
-        reasons.push(`Excessive subdomains: ${h}`);
-        score += 15;
-      }
-
-      // Very long URL
-      if (url.length > 200) {
-        reasons.push("Unusually long URL");
-        score += 10;
-      }
-
-      // HTTP on sensitive page
-      if (parsed.protocol === "http:" && /login|account|secure|verify|bank|password/.test(fullUrl)) {
-        reasons.push(`Insecure HTTP on sensitive page: ${h}`);
-        score += 30;
-      }
-
-      // Encoded characters (obfuscation)
-      if ((url.match(/%[0-9A-Fa-f]{2}/g) || []).length > 5) {
-        reasons.push("Heavy URL encoding (possible obfuscation)");
-        score += 15;
-      }
-
-      // @ symbol in URL (credential phishing)
-      if (fullUrl.includes("@") && !fullUrl.includes("mailto:")) {
-        reasons.push("URL contains @ symbol (credential phishing trick)");
-        score += 30;
-      }
-
-    } catch (_) {}
-  }
-
-  score = Math.min(score, 100);
-  const label = score >= 60 ? "phishing" : score >= 30 ? "suspicious" : "safe";
-  if (reasons.length === 0) reasons.push("No threats detected (local scan)");
-  return { label, score, reasons, offline: true };
+function localFallback(text = "", urls = [], sender = "", subject = "") {
+  return runLocalDetection({ text, urls, sender, subject });
 }
 
 // --- Gmail selectors ---

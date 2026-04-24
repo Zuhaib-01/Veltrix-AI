@@ -54,27 +54,14 @@ async function loadThreatLog() {
 }
 
 async function loadBackendStatus() {
-  try {
-    const base = await getApiUrl();
-    const res = await fetch(`${base}/health`, {
-      signal: AbortSignal.timeout(VELTRIX_CFG.API_TIMEOUT_MS),
-    });
-    if (!res.ok) throw new Error("offline");
-    const data = await res.json();
-    backendStatus = {
-      online: true,
-      mlConnected: data.ml_connected !== false,
-      mode: data.mode || (data.ml_connected === false ? "rules_only" : "ml"),
-      reason: data.ml_reason || "",
-    };
-  } catch (_) {
-    backendStatus = {
-      online: false,
-      mlConnected: false,
-      mode: "offline",
-      reason: "Backend offline",
-    };
-  }
+  backendStatus = await getBackendHealth();
+}
+
+function setConnectionBadge(id, text, tone) {
+  const el = $(id);
+  if (!el) return;
+  el.textContent = text;
+  el.className = `status-chip-value ${tone}`;
 }
 
 async function loadProtectionStatus() {
@@ -84,6 +71,19 @@ async function loadProtectionStatus() {
   const txt  = $("statusText");
   const sub  = $("statusSub");
   const lbl  = $("statusToggleLabel");
+
+  if (!backendStatus.online) {
+    setConnectionBadge("backendConnectionText", "Offline", "offline");
+    setConnectionBadge("mlConnectionText", "Unavailable", "offline");
+  } else {
+    setConnectionBadge("backendConnectionText", "Connected", "online");
+    setConnectionBadge(
+      "mlConnectionText",
+      backendStatus.mlConnected ? "Connected" : (backendStatus.reason || "Offline"),
+      backendStatus.mlConnected ? "online" : "warn"
+    );
+  }
+
   if (on) {
     dot.classList.remove("off");
     lbl.textContent = "ON";
