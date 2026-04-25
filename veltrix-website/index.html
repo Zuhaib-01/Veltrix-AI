@@ -4,360 +4,190 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>Veltrix AI — Phishing Detection</title>
-<link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet"/>
 <style>
-:root{
-  --bg:#090c0f;
-  --bg2:#0d1117;
-  --surface:#111519;
-  --border:rgba(255,255,255,.06);
-  --border-2:rgba(255,255,255,.1);
-  --green:hsl(150,100%,50%);
-  --green-dim:hsl(150,80%,25%);
-  --green-glow:hsl(150,100%,40%);
-  --text:#e8eaed;
-  --muted:rgba(232,234,237,.4);
-  --muted2:rgba(232,234,237,.22);
-  --mono:'IBM Plex Mono',monospace;
-  --sans:'IBM Plex Sans',sans-serif;
-}
-
 *{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth}
-body{background:var(--bg);color:var(--text);font-family:var(--sans);overflow-x:hidden;-webkit-font-smoothing:antialiased}
-
-/* ── GRID HERO ── */
-#hero{position:relative;height:100vh;min-height:640px;display:flex;align-items:center;justify-content:center;overflow:hidden}
-
-#grid-canvas{
-  position:absolute;inset:0;
-  display:grid;
-  gap:3px;
-  pointer-events:none;
-  --mouse-x:50%;--mouse-y:50%;
+:root{
+  --bg:#04080f;
+  --green:#00ff88;
+  --blue:#3b82f6;
+  --mono:'JetBrains Mono',monospace;
+  --sans:'Space Grotesk',sans-serif;
 }
+body{background:var(--bg);color:#fff;font-family:var(--sans);overflow-x:hidden;-webkit-font-smoothing:antialiased}
 
-.cell{
-  border-radius:1px;
-  background:var(--green);
-  opacity:var(--opacity-min,.04);
-  animation:cell-pulse var(--dur,5s) infinite alternate;
-  animation-delay:var(--delay,0s);
-}
+/* ── GRID ── */
+#hero{position:relative;height:100vh;min-height:680px;display:flex;align-items:center;justify-content:center;overflow:hidden}
+#grid{position:absolute;inset:0;display:grid;gap:2px;padding:2px}
+.cell{background:#00ff88;border-radius:1px;opacity:0;animation:cp var(--d,4s) var(--dl,0s) infinite alternate ease-in-out}
+@keyframes cp{0%{opacity:var(--mn,.04)}100%{opacity:var(--mx,.45)}}
 
-@keyframes cell-pulse{
-  from{opacity:var(--opacity-min,.04)}
-  to{opacity:var(--opacity-max,.55)}
-}
-
-/* mouse glow radial overlay */
-#grid-canvas::after{
-  content:'';
-  position:absolute;inset:0;
-  background:radial-gradient(circle 280px at var(--mouse-x) var(--mouse-y),rgba(0,255,128,.06) 0%,transparent 70%);
-  pointer-events:none;
-}
-
-/* dark fade vignette */
-#hero::after{
-  content:'';
+/* The key fix: layered mask that keeps edges bright and dims only the center */
+#hero-mask{
   position:absolute;inset:0;
   background:
-    radial-gradient(ellipse 65% 50% at 50% 50%,rgba(9,12,15,.72) 0%,rgba(9,12,15,.93) 100%),
-    linear-gradient(to bottom,rgba(9,12,15,.6) 0%,rgba(9,12,15,.4) 25%,rgba(9,12,15,.4) 65%,rgba(9,12,15,.97) 100%);
-  pointer-events:none;
+    radial-gradient(ellipse 50% 48% at 50% 50%,
+      rgba(4,8,15,.96) 0%,
+      rgba(4,8,15,.82) 40%,
+      rgba(4,8,15,.38) 72%,
+      rgba(4,8,15,.08) 100%);
+  pointer-events:none;z-index:1
+}
+#hero::after{
+  content:'';position:absolute;bottom:0;left:0;right:0;height:180px;
+  background:linear-gradient(to bottom,transparent,var(--bg));
+  pointer-events:none;z-index:2
+}
+.hero-glow{
+  position:absolute;top:50%;left:50%;
+  transform:translate(-50%,-52%);
+  width:500px;height:500px;border-radius:50%;
+  background:radial-gradient(circle,rgba(0,255,136,.09) 0%,transparent 70%);
+  pointer-events:none;z-index:2
 }
 
-.hero-content{
-  position:relative;z-index:10;
-  text-align:center;
-  max-width:680px;
-  padding:0 24px;
-}
+.hero-inner{position:relative;z-index:3;text-align:center;padding:0 28px;max-width:720px}
 
-.hero-chip{
+.chip{
   display:inline-flex;align-items:center;gap:8px;
-  padding:5px 14px;
-  border:1px solid rgba(0,255,128,.2);
-  border-radius:2px;
-  font-family:var(--mono);font-size:10px;font-weight:500;
-  color:var(--green);letter-spacing:1.5px;text-transform:uppercase;
-  margin-bottom:32px;
-  background:rgba(0,255,128,.03);
+  padding:6px 18px;border:1px solid rgba(0,255,136,.3);border-radius:100px;
+  background:rgba(0,255,136,.06);font-family:var(--mono);font-size:10px;
+  font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:#00ff88;margin-bottom:32px
 }
-.hero-chip::before{
-  content:'';width:5px;height:5px;border-radius:50%;
-  background:var(--green);box-shadow:0 0 8px var(--green);
-  animation:blink 2s infinite;
-}
-@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+.dot{width:6px;height:6px;border-radius:50%;background:#00ff88;box-shadow:0 0 8px #00ff88;animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1;box-shadow:0 0 8px #00ff88}50%{opacity:.3;box-shadow:none}}
 
-.hero-title{
-  font-family:var(--mono);
-  font-size:clamp(42px,7vw,80px);
-  font-weight:600;
-  letter-spacing:-2px;
-  line-height:.95;
-  margin-bottom:10px;
+h1{font-size:clamp(60px,10vw,108px);font-weight:700;letter-spacing:-4px;line-height:.9;margin-bottom:6px;color:#fff}
+h1 .g{color:#00ff88;text-shadow:0 0 50px rgba(0,255,136,.4)}
+.sub{
+  font-family:var(--mono);font-size:clamp(11px,1.4vw,14px);
+  color:rgba(255,255,255,.38);font-weight:300;letter-spacing:1px;margin-bottom:24px
 }
-.hero-title .accent{color:var(--green)}
-
-.hero-tagline{
-  font-family:var(--mono);
-  font-size:clamp(13px,1.8vw,17px);
-  color:#c8cdd4;
-  font-weight:400;
-  letter-spacing:.5px;
-  margin-bottom:24px;
-  text-shadow:0 0 30px rgba(0,0,0,1),0 2px 8px rgba(0,0,0,.9);
+.tagline{
+  font-size:clamp(16px,2.2vw,22px);font-weight:500;
+  color:#f0f4f8;margin-bottom:14px;line-height:1.3;
+  text-shadow:0 0 40px rgba(0,0,0,1),0 2px 16px rgba(0,0,0,.95)
 }
-
-.hero-desc{
-  font-size:15px;color:#a8adb5;
-  line-height:1.8;max-width:480px;margin:0 auto 44px;
-  font-weight:400;
-  text-shadow:0 0 20px rgba(0,0,0,1),0 2px 6px rgba(0,0,0,.9);
+.desc{
+  font-size:15px;color:rgba(240,244,248,.68);line-height:1.8;
+  max-width:490px;margin:0 auto 44px;font-weight:400;
+  text-shadow:0 0 30px rgba(0,0,0,1),0 2px 10px rgba(0,0,0,.9)
 }
-
-.hero-btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
-
-.btn{
-  display:inline-flex;align-items:center;gap:9px;
-  padding:11px 24px;
-  font-family:var(--mono);font-size:12px;font-weight:500;
-  letter-spacing:.5px;text-decoration:none;
-  border-radius:2px;transition:all .18s;cursor:pointer;border:none;
-}
-.btn-primary{
-  background:var(--green);color:#000;
-}
-.btn-primary:hover{box-shadow:0 0 24px rgba(0,255,128,.35);transform:translateY(-1px)}
-.btn-ghost{
-  background:transparent;color:var(--muted);
-  border:1px solid var(--border-2);
-}
-.btn-ghost:hover{border-color:rgba(0,255,128,.3);color:var(--green);transform:translateY(-1px)}
+.btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:13px 28px;border-radius:9px;font-family:var(--mono);font-size:12px;font-weight:600;letter-spacing:.5px;text-decoration:none;transition:all .2s;cursor:pointer;border:none}
+.btn-g{background:#00ff88;color:#000}
+.btn-g:hover{background:#33ffaa;box-shadow:0 0 32px rgba(0,255,136,.45);transform:translateY(-2px)}
+.btn-o{background:rgba(255,255,255,.05);color:rgba(255,255,255,.7);border:1px solid rgba(255,255,255,.12)}
+.btn-o:hover{border-color:rgba(0,255,136,.35);color:#00ff88;transform:translateY(-2px)}
 
 /* ── NAV ── */
-nav{
-  position:fixed;top:0;left:0;right:0;z-index:100;
-  padding:18px 40px;
-  display:flex;align-items:center;justify-content:space-between;
-  border-bottom:1px solid transparent;
-  transition:all .3s;
-}
-nav.scrolled{
-  background:rgba(9,12,15,.92);
-  backdrop-filter:blur(16px);
-  border-bottom-color:var(--border);
-}
-.nav-logo{
-  font-family:var(--mono);font-size:15px;font-weight:600;
-  display:flex;align-items:center;gap:10px;
-  text-decoration:none;color:var(--text);
-}
-.nav-logo-dot{
-  width:8px;height:8px;border-radius:50%;
-  background:var(--green);box-shadow:0 0 10px var(--green);
-}
-.nav-links{display:flex;gap:28px;list-style:none}
-.nav-links a{
-  font-family:var(--mono);font-size:11px;font-weight:400;
-  color:var(--muted);text-decoration:none;letter-spacing:.5px;
-  transition:color .15s;text-transform:uppercase;
-}
-.nav-links a:hover{color:var(--green)}
+nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:20px 48px;display:flex;align-items:center;justify-content:space-between;transition:all .3s}
+nav.on{background:rgba(4,8,15,.92);backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,.06);padding:14px 48px}
+.logo{display:flex;align-items:center;gap:10px;text-decoration:none}
+.logo-icon{width:34px;height:34px;border-radius:8px;background:linear-gradient(135deg,#00ff88,#00aaff);display:flex;align-items:center;justify-content:center;font-size:16px}
+.logo-name{font-size:16px;font-weight:700;color:#fff;letter-spacing:-.3px}
+.logo-name em{color:#00ff88;font-style:normal}
+nav ul{display:flex;gap:32px;list-style:none}
+nav a{font-family:var(--mono);font-size:11px;font-weight:400;color:rgba(255,255,255,.4);text-decoration:none;letter-spacing:.8px;text-transform:uppercase;transition:color .15s}
+nav a:hover{color:#00ff88}
 
-/* ── SECTION BASE ── */
-.section{max-width:960px;margin:0 auto;padding:110px 32px}
-.section-label{
-  font-family:var(--mono);font-size:10px;font-weight:500;
-  color:var(--green);letter-spacing:2px;text-transform:uppercase;
-  margin-bottom:12px;
-}
-.section-h{
-  font-family:var(--mono);font-size:clamp(24px,3.5vw,36px);
-  font-weight:600;letter-spacing:-1px;margin-bottom:14px;line-height:1.1;
-}
-.section-p{
-  font-size:14px;color:var(--muted);line-height:1.8;
-  max-width:540px;font-weight:300;
-}
+/* ── SECTIONS ── */
+.wrap{max-width:980px;margin:0 auto;padding:100px 32px}
+.slabel{font-family:var(--mono);font-size:10px;font-weight:600;color:#00ff88;letter-spacing:2.5px;text-transform:uppercase;margin-bottom:14px;display:flex;align-items:center;gap:10px}
+.slabel::before{content:'';width:22px;height:1px;background:#00ff88}
+.sh{font-size:clamp(28px,4vw,44px);font-weight:700;letter-spacing:-1.5px;line-height:1.05;margin-bottom:16px}
+.sh em{color:#00ff88;font-style:normal}
+.sp{font-size:15px;color:rgba(255,255,255,.42);line-height:1.8;max-width:520px;font-weight:400}
 
-/* ── DIVIDER ── */
-.rule{
-  height:1px;max-width:960px;margin:0 auto;
-  background:linear-gradient(to right,transparent,var(--border-2),transparent);
-}
+/* stats */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;margin-top:56px;background:rgba(255,255,255,.06);border-radius:14px;overflow:hidden;border:1px solid rgba(255,255,255,.07)}
+.stat{background:#070c13;padding:32px 24px;transition:background .2s}
+.stat:hover{background:#0b1219}
+.sn{font-size:38px;font-weight:700;color:#00ff88;font-family:var(--mono);line-height:1;margin-bottom:8px;letter-spacing:-2px}
+.sl{font-size:12px;color:rgba(255,255,255,.3);line-height:1.4}
 
-/* ── ABOUT / STATS ── */
-.stats-row{
-  display:grid;grid-template-columns:repeat(4,1fr);gap:1px;
-  margin-top:56px;border:1px solid var(--border);
-  background:var(--border);border-radius:3px;overflow:hidden;
-}
-.stat{
-  background:var(--surface);padding:28px 24px;
-  transition:background .2s;
-}
-.stat:hover{background:#141a20}
-.stat-val{
-  font-family:var(--mono);font-size:28px;font-weight:600;
-  color:var(--green);margin-bottom:6px;
-}
-.stat-label{font-size:11px;color:var(--muted2);font-weight:400;letter-spacing:.3px}
-
-.features-grid{
-  display:grid;grid-template-columns:1fr 1fr;gap:1px;
-  margin-top:56px;border:1px solid var(--border);
-  background:var(--border);border-radius:3px;overflow:hidden;
-}
-.feat-item{
-  background:var(--surface);padding:32px 28px;
-  transition:background .2s;
-}
-.feat-item:hover{background:#141a20}
-.feat-icon{
-  font-family:var(--mono);font-size:11px;font-weight:600;
-  color:var(--green);letter-spacing:1px;margin-bottom:14px;
-  display:flex;align-items:center;gap:8px;
-}
-.feat-icon::before{
-  content:'';width:20px;height:1px;background:var(--green);display:inline-block;
-}
-.feat-title{font-family:var(--mono);font-size:14px;font-weight:500;margin-bottom:8px}
-.feat-desc{font-size:13px;color:var(--muted2);line-height:1.7;font-weight:300}
+/* features */
+.feats{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+.feat{background:#070c13;border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:30px;transition:all .2s;position:relative;overflow:hidden}
+.feat::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(to right,transparent,rgba(0,255,136,.3),transparent);opacity:0;transition:opacity .2s}
+.feat:hover{border-color:rgba(0,255,136,.18);background:#0a1018}
+.feat:hover::before{opacity:1}
+.fn{font-family:var(--mono);font-size:10px;font-weight:600;color:#00ff88;letter-spacing:1.5px;margin-bottom:16px;opacity:.65}
+.ft{font-size:15px;font-weight:600;margin-bottom:8px;letter-spacing:-.3px}
+.fd{font-size:13px;color:rgba(255,255,255,.38);line-height:1.7;font-weight:400}
 
 /* ── DOWNLOAD ── */
-.dl-grid{
-  display:grid;grid-template-columns:1fr 1fr;gap:16px;
-  margin-top:56px;
-}
-.dl-card{
-  background:var(--surface);border:1px solid var(--border);
-  border-radius:3px;padding:36px 32px;
-  position:relative;overflow:hidden;
-  transition:border-color .2s,transform .2s;
-}
-.dl-card:hover{border-color:rgba(0,255,128,.2);transform:translateY(-3px)}
-.dl-card::before{
-  content:'';position:absolute;top:0;left:0;right:0;height:1px;
-  background:linear-gradient(to right,transparent,rgba(0,255,128,.4),transparent);
-  opacity:0;transition:opacity .2s;
-}
-.dl-card:hover::before{opacity:1}
+.dl-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:56px}
+.dlc{border-radius:18px;padding:40px 36px;position:relative;overflow:hidden;transition:transform .22s}
+.dlc:hover{transform:translateY(-5px)}
+.dlc-ext{background:linear-gradient(145deg,#061a10 0%,#030e08 100%);border:1px solid rgba(0,255,136,.22)}
+.dlc-app{background:linear-gradient(145deg,#060f1c 0%,#030810 100%);border:1px solid rgba(59,130,246,.22)}
+.dlc-ext::before{content:'';position:absolute;top:-60px;right:-60px;width:200px;height:200px;border-radius:50%;background:radial-gradient(circle,rgba(0,255,136,.1) 0%,transparent 70%)}
+.dlc-app::before{content:'';position:absolute;top:-60px;right:-60px;width:200px;height:200px;border-radius:50%;background:radial-gradient(circle,rgba(59,130,246,.1) 0%,transparent 70%)}
+.dlbadge{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:100px;font-family:var(--mono);font-size:9px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:22px}
+.bg{background:rgba(0,255,136,.1);border:1px solid rgba(0,255,136,.22);color:#00ff88}
+.bb{background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.22);color:#93c5fd}
+.dlt{font-size:22px;font-weight:700;letter-spacing:-.5px;margin-bottom:10px}
+.dld{font-size:13px;color:rgba(255,255,255,.4);line-height:1.75;margin-bottom:26px;font-weight:400}
+.dlmeta{display:flex;gap:20px;padding:14px 0;border-top:1px solid rgba(255,255,255,.07);border-bottom:1px solid rgba(255,255,255,.07);margin-bottom:26px}
+.dlm{font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.25)}
+.dlm strong{display:block;font-size:12px;color:rgba(255,255,255,.62);font-weight:500;margin-top:3px}
+.dlbtn{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;padding:14px;border-radius:10px;font-family:var(--mono);font-size:12px;font-weight:600;text-decoration:none;transition:all .2s;letter-spacing:.5px}
+.dlbtn-g{background:#00ff88;color:#000}
+.dlbtn-g:hover{background:#33ffaa;box-shadow:0 4px 28px rgba(0,255,136,.4)}
+.dlbtn-b{background:#3b82f6;color:#fff}
+.dlbtn-b:hover{background:#60a5fa;box-shadow:0 4px 28px rgba(59,130,246,.4)}
 
-.dl-type{
-  font-family:var(--mono);font-size:9px;font-weight:600;
-  letter-spacing:2px;text-transform:uppercase;color:var(--green);
-  margin-bottom:20px;display:flex;align-items:center;gap:8px;
-}
-.dl-type::after{content:'';flex:1;height:1px;background:var(--border-2)}
-.dl-title{
-  font-family:var(--mono);font-size:20px;font-weight:600;
-  letter-spacing:-.5px;margin-bottom:10px;
-}
-.dl-desc{font-size:13px;color:var(--muted2);line-height:1.7;margin-bottom:28px;font-weight:300}
-.dl-specs{
-  display:flex;gap:20px;margin-bottom:28px;
-  padding:14px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border);
-}
-.dl-spec{font-family:var(--mono);font-size:10px;color:var(--muted2)}
-.dl-spec span{color:var(--muted);display:block;margin-top:3px;font-size:11px}
-
-/* ── SETUP GUIDE ── */
-.steps{display:grid;gap:0;margin-top:56px;border:1px solid var(--border);border-radius:3px;overflow:hidden}
-.step{
-  display:grid;grid-template-columns:56px 1fr;
-  border-bottom:1px solid var(--border);
-  transition:background .18s;
-}
+/* ── SETUP ── */
+.steps{display:grid;gap:0;margin-top:48px;border:1px solid rgba(255,255,255,.08);border-radius:14px;overflow:hidden}
+.step{display:grid;grid-template-columns:64px 1fr;border-bottom:1px solid rgba(255,255,255,.06);transition:background .15s}
 .step:last-child{border-bottom:none}
-.step:hover{background:rgba(0,255,128,.02)}
-.step-n{
-  display:flex;align-items:flex-start;justify-content:center;
-  padding:28px 0 28px;
-  border-right:1px solid var(--border);
-}
-.step-num{
-  font-family:var(--mono);font-size:11px;font-weight:600;
-  color:var(--green);opacity:.6;letter-spacing:1px;margin-top:2px;
-}
-.step-body{padding:26px 28px}
-.step-title{font-family:var(--mono);font-size:13px;font-weight:500;margin-bottom:7px}
-.step-desc{font-size:12px;color:var(--muted2);line-height:1.7;font-weight:300}
-.step-code{
-  display:inline-block;margin-top:10px;
-  padding:5px 12px;
-  background:#0a0d10;
-  border:1px solid var(--border-2);
-  border-radius:2px;
-  font-family:var(--mono);font-size:11px;color:var(--green);
-  letter-spacing:.3px;
-}
+.step:hover{background:rgba(0,255,136,.025)}
+.step-l{display:flex;align-items:flex-start;justify-content:center;padding:26px 0;border-right:1px solid rgba(255,255,255,.06)}
+.step-n{font-family:var(--mono);font-size:11px;font-weight:600;color:#00ff88;opacity:.5;margin-top:3px;letter-spacing:1px}
+.step-r{padding:24px 28px}
+.step-t{font-size:14px;font-weight:600;margin-bottom:7px;letter-spacing:-.2px}
+.step-d{font-size:12px;color:rgba(255,255,255,.37);line-height:1.75;font-weight:400}
+.pill{display:inline-block;margin-top:10px;padding:4px 12px;background:rgba(0,255,136,.07);border:1px solid rgba(0,255,136,.18);border-radius:5px;font-family:var(--mono);font-size:11px;color:#00ff88;letter-spacing:.3px}
 
-/* ── CODE BLOCK ── */
-.code-block{
-  background:#050709;
-  border:1px solid var(--border);
-  border-radius:3px;
-  overflow:hidden;
-  margin-top:32px;
-}
-.code-top{
-  display:flex;align-items:center;justify-content:space-between;
-  padding:10px 18px;
-  border-bottom:1px solid var(--border);
-}
-.code-fname{font-family:var(--mono);font-size:10px;color:var(--muted2);letter-spacing:.5px}
-.code-dots{display:flex;gap:6px}
-.code-dots i{width:9px;height:9px;border-radius:50%;display:block}
-pre{
-  padding:24px;overflow-x:auto;
-  font-family:var(--mono);font-size:12px;line-height:2;
-  color:rgba(232,234,237,.55);
-}
-.t-g{color:var(--green)}
-.t-a{color:rgba(232,234,237,.8)}
-.t-c{color:rgba(232,234,237,.25);font-style:italic}
-.t-s{color:#7dd3fc}
+/* code */
+.code{background:#020508;border:1px solid rgba(255,255,255,.08);border-radius:14px;overflow:hidden;margin-top:24px}
+.cbar{display:flex;align-items:center;justify-content:space-between;padding:11px 18px;background:rgba(255,255,255,.025);border-bottom:1px solid rgba(255,255,255,.06)}
+.cdots{display:flex;gap:6px}
+.cdots i{width:10px;height:10px;border-radius:50%;display:block}
+.cname{font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.22);letter-spacing:.5px}
+pre{padding:22px 24px;overflow-x:auto;font-family:var(--mono);font-size:12px;line-height:1.95;color:rgba(255,255,255,.48)}
+.cg{color:#00ff88}.cb{color:#60a5fa}.cy{color:#fbbf24}.cc{color:rgba(255,255,255,.2);font-style:italic}.cw{color:rgba(255,255,255,.76)}
 
-/* ── FOOTER ── */
-footer{
-  border-top:1px solid var(--border);
-  padding:48px 32px;
-  max-width:960px;margin:0 auto;
-  display:flex;align-items:center;justify-content:space-between;
-}
-.footer-logo{font-family:var(--mono);font-size:13px;font-weight:600;color:var(--muted2)}
-.footer-logo span{color:var(--green)}
-.footer-copy{font-family:var(--mono);font-size:10px;color:var(--muted2);opacity:.4;letter-spacing:.5px}
+/* ── divider / footer ── */
+hr{border:none;height:1px;background:linear-gradient(to right,transparent,rgba(255,255,255,.09),transparent);max-width:980px;margin:0 auto}
+footer{max-width:980px;margin:0 auto;padding:44px 32px;display:flex;align-items:center;justify-content:space-between;border-top:1px solid rgba(255,255,255,.07)}
+.fl{font-weight:700;font-size:14px;color:rgba(255,255,255,.45)}
+.fl span{color:#00ff88}
+.fc{font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.18);letter-spacing:.5px}
 
-/* ── SCROLL REVEAL ── */
-.reveal{opacity:0;transform:translateY(20px);transition:opacity .5s ease,transform .5s ease}
-.reveal.visible{opacity:1;transform:none}
+/* reveal */
+.reveal{opacity:0;transform:translateY(22px);transition:opacity .55s ease,transform .55s ease}
+.reveal.in{opacity:1;transform:none}
 
-@media(max-width:720px){
-  nav{padding:16px 20px}
-  .nav-links{display:none}
-  .stats-row{grid-template-columns:1fr 1fr}
-  .features-grid{grid-template-columns:1fr}
-  .dl-grid{grid-template-columns:1fr}
-  .section{padding:80px 20px}
+@media(max-width:700px){
+  nav{padding:16px 20px}nav.on{padding:12px 20px}nav ul{display:none}
+  .feats,.dl-grid{grid-template-columns:1fr}
+  .stats{grid-template-columns:1fr 1fr}
+  .wrap{padding:72px 20px}
   footer{flex-direction:column;gap:12px;text-align:center}
 }
 </style>
 </head>
 <body>
 
-<!-- NAV -->
 <nav id="nav">
-  <a class="nav-logo" href="#">
-    <span class="nav-logo-dot"></span>
-    Veltrix AI
+  <a class="logo" href="#">
+    <div class="logo-icon">🛡</div>
+    <div class="logo-name">Veltrix<em> AI</em></div>
   </a>
-  <ul class="nav-links">
+  <ul>
     <li><a href="#about">About</a></li>
     <li><a href="#download">Download</a></li>
     <li><a href="#setup">Setup</a></li>
@@ -366,290 +196,170 @@ footer{
 
 <!-- HERO -->
 <section id="hero">
-  <div id="grid-canvas"></div>
-  <div class="hero-content">
-    <div class="hero-chip">System Active — v1.0.0</div>
-    <h1 class="hero-title">
-      Veltrix<br/><span class="accent">AI</span>
-    </h1>
-    <p class="hero-tagline">Multilingual Phishing Detection &amp; Threat Intelligence</p>
-    <p class="hero-desc">
-      Real-time protection for Gmail, SMS, and every link you touch.
-      ML-powered, explainable, privacy-first.
-    </p>
-    <div class="hero-btns">
-      <a href="#download" class="btn btn-primary">↓ Download</a>
-      <a href="#setup" class="btn btn-ghost">Setup Guide →</a>
+  <div id="grid"></div>
+  <div id="hero-mask"></div>
+  <div class="hero-glow"></div>
+
+  <div class="hero-inner">
+    <div class="chip"><span class="dot"></span>System Active — v1.0.0</div>
+    <h1>Veltrix<br/><span class="g">AI</span></h1>
+    <p class="sub">// PHISHING DETECTION &amp; THREAT INTELLIGENCE</p>
+    <p class="tagline">Multilingual Phishing Detection &amp; Threat Intelligence</p>
+    <p class="desc">Real-time protection for Gmail, SMS, and every link you touch.<br/>ML-powered, explainable, privacy-first.</p>
+    <div class="btns">
+      <a href="#download" class="btn btn-g">↓ Download Extension</a>
+      <a href="#setup" class="btn btn-o">Setup Guide →</a>
     </div>
   </div>
 </section>
 
 <!-- ABOUT -->
-<section class="section reveal" id="about">
-  <div class="section-label">What it is</div>
-  <h2 class="section-h">Threat detection.<br/>Every channel.</h2>
-  <p class="section-p">
-    Veltrix AI combines a TF-IDF machine learning classifier with a rule engine to detect phishing in emails, SMS, and URLs — in 8 languages, with explainable results.
-  </p>
-
-  <div class="stats-row">
-    <div class="stat"><div class="stat-val">8</div><div class="stat-label">Languages supported</div></div>
-    <div class="stat"><div class="stat-val">0–100</div><div class="stat-label">Risk score range</div></div>
-    <div class="stat"><div class="stat-val">5</div><div class="stat-label">System components</div></div>
-    <div class="stat"><div class="stat-val">0</div><div class="stat-label">Messages stored</div></div>
+<section class="wrap" id="about">
+  <div class="reveal">
+    <div class="slabel">What it does</div>
+    <h2 class="sh">Detect threats.<br/>Every <em>channel</em>.</h2>
+    <p class="sp">Veltrix AI combines a TF-IDF machine learning classifier with a heuristic rule engine to catch phishing across email, SMS, and URLs — in 8 languages, with fully explainable scores.</p>
   </div>
-
-  <div class="features-grid" style="margin-top:1px">
-    <div class="feat-item">
-      <div class="feat-icon">01</div>
-      <div class="feat-title">Gmail Real-time Scan</div>
-      <div class="feat-desc">MutationObserver watches your inbox as emails load. Phishing rows turn red, suspicious turn amber — instantly.</div>
-    </div>
-    <div class="feat-item">
-      <div class="feat-icon">02</div>
-      <div class="feat-title">URL Blocking</div>
-      <div class="feat-desc">Navigate to a blocked URL and the extension redirects you to a warning page before any content loads.</div>
-    </div>
-    <div class="feat-item">
-      <div class="feat-icon">03</div>
-      <div class="feat-title">Mobile Share-to-Scan</div>
-      <div class="feat-desc">Tap Share in any app — SMS, WhatsApp, Gmail — and Veltrix AI receives the text and returns a risk score instantly.</div>
-    </div>
-    <div class="feat-item">
-      <div class="feat-icon">04</div>
-      <div class="feat-title">Explainable Results</div>
-      <div class="feat-desc">Every score comes with a human-readable breakdown: which keywords, which URL patterns, which ML signals fired.</div>
-    </div>
+  <div class="stats reveal">
+    <div class="stat"><div class="sn">8</div><div class="sl">Languages supported</div></div>
+    <div class="stat"><div class="sn">0–100</div><div class="sl">Risk score range</div></div>
+    <div class="stat"><div class="sn">5</div><div class="sl">System components</div></div>
+    <div class="stat"><div class="sn">0</div><div class="sl">Messages stored</div></div>
+  </div>
+  <div class="feats reveal">
+    <div class="feat"><div class="fn">01 — REALTIME</div><div class="ft">Gmail Live Scanning</div><div class="fd">MutationObserver watches your inbox as emails load. Phishing rows turn red, suspicious turn amber — instantly, no refresh.</div></div>
+    <div class="feat"><div class="fn">02 — BLOCKING</div><div class="ft">URL &amp; Sender Shield</div><div class="fd">Navigate to a blocked URL and the extension intercepts before the page loads. Block senders permanently in one click.</div></div>
+    <div class="feat"><div class="fn">03 — MOBILE</div><div class="ft">Share-to-Scan</div><div class="fd">Tap Share in any app — SMS, WhatsApp, Gmail — and Veltrix App receives the text and returns a risk score instantly.</div></div>
+    <div class="feat"><div class="fn">04 — EXPLAINABLE</div><div class="ft">Why it flagged</div><div class="fd">Every score includes a plain-language breakdown: which keywords, URL patterns, and ML signals contributed to the result.</div></div>
   </div>
 </section>
 
-<div class="rule"></div>
+<hr/>
 
 <!-- DOWNLOAD -->
-<section class="section reveal" id="download">
-  <div class="section-label">Get it</div>
-  <h2 class="section-h">Download</h2>
-  <p class="section-p">
-    Two clients. One backend. The extension covers your browser; the app covers everything else.
-  </p>
-
-  <div class="dl-grid">
-    <!-- Extension -->
-    <div class="dl-card">
-      <div class="dl-type">Chrome Extension</div>
-      <div class="dl-title">Veltrix AI Extension</div>
-      <p class="dl-desc">Manifest v3 service worker. Scans Gmail in real-time, intercepts suspicious navigation, blocks senders.</p>
-      <div class="dl-specs">
-        <div class="dl-spec">Version<span>1.0.0</span></div>
-        <div class="dl-spec">Manifest<span>v3</span></div>
-        <div class="dl-spec">Size<span>~18 KB</span></div>
+<section class="wrap" id="download">
+  <div class="reveal">
+    <div class="slabel">Get it</div>
+    <h2 class="sh">Download <em>Veltrix AI</em></h2>
+    <p class="sp">Two clients. One backend. Extension covers your browser — app covers everything on mobile.</p>
+  </div>
+  <div class="dl-grid reveal">
+    <div class="dlc dlc-ext">
+      <div class="dlbadge bg">● Chrome Extension</div>
+      <div class="dlt">Veltrix AI Extension</div>
+      <p class="dld">Manifest v3 service worker. Scans Gmail in real-time, intercepts suspicious URLs, and blocks senders — all from your Chrome toolbar.</p>
+      <div class="dlmeta">
+        <div class="dlm">Version<strong>1.0.0</strong></div>
+        <div class="dlm">Manifest<strong>v3</strong></div>
+        <div class="dlm">Size<strong>~18 KB</strong></div>
       </div>
-      <a href="apps/veltrix-extension.zip" download class="btn btn-primary" style="width:100%;justify-content:center">
-        ↓ Download Extension
-      </a>
+      <a href="apps/veltrix-extension.zip" download class="dlbtn dlbtn-g">↓ Download Extension</a>
     </div>
-
-    <!-- APK -->
-    <div class="dl-card">
-      <div class="dl-type">Android App</div>
-      <div class="dl-title">Veltrix App</div>
-      <p class="dl-desc">Flutter app with share-to-scan, URL input, paste scanner. AES-256 local storage. No login required.</p>
-      <div class="dl-specs">
-        <div class="dl-spec">Version<span>1.0.0</span></div>
-        <div class="dl-spec">Android<span>5.0+</span></div>
-        <div class="dl-spec">Size<span>~22 MB</span></div>
+    <div class="dlc dlc-app">
+      <div class="dlbadge bb">◉ Android App</div>
+      <div class="dlt">Veltrix App</div>
+      <p class="dld">Flutter app with share-to-scan, URL paste scanner, and sender blocking. AES-256 local storage. No login required.</p>
+      <div class="dlmeta">
+        <div class="dlm">Version<strong>1.0.0</strong></div>
+        <div class="dlm">Android<strong>5.0+</strong></div>
+        <div class="dlm">Size<strong>~22 MB</strong></div>
       </div>
-      <a href="apps/veltrix-app.apk" download class="btn btn-ghost" style="width:100%;justify-content:center">
-        ↓ Download App
-      </a>
+      <a href="apps/veltrix-app.apk" download class="dlbtn dlbtn-b">↓ Download Veltrix App</a>
     </div>
   </div>
 </section>
 
-<div class="rule"></div>
+<hr/>
 
 <!-- SETUP -->
-<section class="section reveal" id="setup">
-  <div class="section-label">Install</div>
-  <h2 class="section-h">Extension setup</h2>
-  <p class="section-p">Load the extension unpacked in Chrome. No account or API key needed to try locally.</p>
-
-  <div class="steps">
-    <div class="step">
-      <div class="step-n"><span class="step-num">01</span></div>
-      <div class="step-body">
-        <div class="step-title">Download &amp; extract the ZIP</div>
-        <p class="step-desc">Download the extension ZIP above and unzip it to any local folder. Do not rename files inside.</p>
-        <code class="step-code">veltrix-extension/</code>
-      </div>
-    </div>
-    <div class="step">
-      <div class="step-n"><span class="step-num">02</span></div>
-      <div class="step-body">
-        <div class="step-title">Open Chrome extensions &amp; enable Dev mode</div>
-        <p class="step-desc">Navigate to the extensions page, enable the Developer Mode toggle in the top-right corner.</p>
-        <code class="step-code">chrome://extensions</code>
-      </div>
-    </div>
-    <div class="step">
-      <div class="step-n"><span class="step-num">03</span></div>
-      <div class="step-body">
-        <div class="step-title">Load unpacked</div>
-        <p class="step-desc">Click "Load Unpacked" and select the extracted <code style="font-family:var(--mono);font-size:11px;color:var(--green)">veltrix-extension/</code> folder. The shield icon appears in your toolbar.</p>
-        <code class="step-code">Load Unpacked → select folder</code>
-      </div>
-    </div>
-    <div class="step">
-      <div class="step-n"><span class="step-num">04</span></div>
-      <div class="step-body">
-        <div class="step-title">Set your API endpoint</div>
-        <p class="step-desc">By default the extension points to localhost. For a hosted backend, update one line:</p>
-        <code class="step-code">background.js → API_BASE_URL</code>
-      </div>
-    </div>
+<section class="wrap" id="setup">
+  <div class="reveal">
+    <div class="slabel">Extension setup</div>
+    <h2 class="sh">Install in <em>4 steps</em></h2>
+    <p class="sp">No account. No API key to configure. Load unpacked in Chrome and you're protected immediately.</p>
   </div>
 
-  <!-- config code block -->
-  <div class="code-block">
-    <div class="code-top">
-      <div class="code-dots">
-        <i style="background:#ff5f57"></i>
-        <i style="background:#febc2e"></i>
-        <i style="background:#28c840"></i>
-      </div>
-      <span class="code-fname">veltrix-extension / background.js</span>
-    </div>
-    <pre><span class="t-c">// Local development (default)</span>
-<span class="t-s">const</span> <span class="t-a">API_BASE_URL</span> = <span class="t-g">"http://localhost:8000"</span>;
-
-<span class="t-c">// Production — replace with your Render URL</span>
-<span class="t-c">// const API_BASE_URL = "https://veltrix-api.onrender.com";</span></pre>
+  <div class="steps reveal">
+    <div class="step"><div class="step-l"><span class="step-n">01</span></div><div class="step-r"><div class="step-t">Download &amp; extract the ZIP</div><p class="step-d">Download the extension ZIP above and unzip it to a local folder. Keep all files — do not rename anything inside.</p><span class="pill">veltrix-extension/</span></div></div>
+    <div class="step"><div class="step-l"><span class="step-n">02</span></div><div class="step-r"><div class="step-t">Open Chrome extensions page</div><p class="step-d">Navigate to the extensions manager and enable the Developer Mode toggle in the top-right corner.</p><span class="pill">chrome://extensions</span></div></div>
+    <div class="step"><div class="step-l"><span class="step-n">03</span></div><div class="step-r"><div class="step-t">Load Unpacked</div><p class="step-d">Click "Load Unpacked" and select the extracted folder. The Veltrix shield icon appears in your toolbar.</p><span class="pill">Load Unpacked → select folder</span></div></div>
+    <div class="step"><div class="step-l"><span class="step-n">04</span></div><div class="step-r"><div class="step-t">Set your backend URL (optional)</div><p class="step-d">By default the extension points to localhost. For a hosted backend, update one constant.</p><span class="pill">background.js → API_BASE_URL</span></div></div>
   </div>
 
-  <!-- file tree -->
-  <div class="code-block" style="margin-top:12px">
-    <div class="code-top">
-      <div class="code-dots">
-        <i style="background:#ff5f57"></i>
-        <i style="background:#febc2e"></i>
-        <i style="background:#28c840"></i>
-      </div>
-      <span class="code-fname">file structure</span>
-    </div>
-    <pre><span class="t-g">veltrix-extension/</span>
-├── <span class="t-a">manifest.json</span>    <span class="t-c">← Manifest v3 permissions</span>
-├── <span class="t-a">background.js</span>    <span class="t-c">← Service worker · URL blocking</span>
-├── <span class="t-a">content.js</span>       <span class="t-c">← Gmail MutationObserver</span>
-├── <span class="t-a">popup.html</span>       <span class="t-c">← Toolbar popup UI</span>
-├── <span class="t-a">popup.js</span>         <span class="t-c">← Manual scan logic</span>
-└── <span class="t-a">blocked.html</span>     <span class="t-c">← Blocked URL warning page</span></pre>
+  <div class="code reveal">
+    <div class="cbar"><div class="cdots"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i></div><span class="cname">background.js</span></div>
+    <pre><span class="cc">// Local dev (default)</span>
+<span class="cb">const</span> <span class="cw">API_BASE_URL</span> = <span class="cg">"http://localhost:8000"</span>;
+
+<span class="cc">// Hosted backend on Render:</span>
+<span class="cc">// const API_BASE_URL = "https://veltrix-api.onrender.com";</span></pre>
   </div>
 
-  <!-- APK steps -->
-  <div style="margin-top:72px">
-    <div class="section-label">Android app</div>
-    <h3 class="section-h" style="font-size:24px">Mobile setup</h3>
-    <p class="section-p">Sideload the APK. Enable unknown sources once, install, done.</p>
+  <div class="code reveal" style="margin-top:10px">
+    <div class="cbar"><div class="cdots"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i></div><span class="cname">file structure</span></div>
+    <pre><span class="cg">veltrix-extension/</span>
+├── <span class="cw">manifest.json</span>   <span class="cc">← Manifest v3 · permissions</span>
+├── <span class="cy">background.js</span>   <span class="cc">← Service worker · URL blocking</span>
+├── <span class="cy">content.js</span>      <span class="cc">← Gmail MutationObserver</span>
+├── <span class="cy">popup.html</span>      <span class="cc">← Toolbar popup UI</span>
+├── <span class="cy">popup.js</span>        <span class="cc">← Manual scan logic</span>
+└── <span class="cy">blocked.html</span>    <span class="cc">← Blocked URL warning page</span></pre>
   </div>
 
-  <div class="steps" style="margin-top:32px">
-    <div class="step">
-      <div class="step-n"><span class="step-num">01</span></div>
-      <div class="step-body">
-        <div class="step-title">Allow unknown sources</div>
-        <p class="step-desc">Go to Settings → Security → enable "Install unknown apps" for your browser or Files app.</p>
-        <code class="step-code">Settings → Security → Unknown Apps</code>
-      </div>
-    </div>
-    <div class="step">
-      <div class="step-n"><span class="step-num">02</span></div>
-      <div class="step-body">
-        <div class="step-title">Download &amp; install APK</div>
-        <p class="step-desc">Download the APK above, tap the file notification, confirm install. No account or sign-in required.</p>
-        <code class="step-code">veltrix-mobile.apk</code>
-      </div>
-    </div>
-    <div class="step">
-      <div class="step-n"><span class="step-num">03</span></div>
-      <div class="step-body">
-        <div class="step-title">Share any text to scan</div>
-        <p class="step-desc">In SMS, WhatsApp or Gmail — tap Share → Veltrix AI. The text is analysed and a risk score returned in seconds.</p>
-        <code class="step-code">Share → Veltrix AI</code>
-      </div>
-    </div>
+  <div class="reveal" style="margin-top:80px">
+    <div class="slabel">Android setup</div>
+    <h3 class="sh" style="font-size:clamp(22px,3vw,34px)">Install <em>Veltrix App</em></h3>
+    <p class="sp">Sideload the APK in three steps. No Play Store required.</p>
+  </div>
+
+  <div class="steps reveal" style="margin-top:32px">
+    <div class="step"><div class="step-l"><span class="step-n">01</span></div><div class="step-r"><div class="step-t">Allow unknown sources</div><p class="step-d">Go to Settings → Security → enable "Install unknown apps" for your browser or file manager.</p><span class="pill">Settings → Security → Unknown Apps</span></div></div>
+    <div class="step"><div class="step-l"><span class="step-n">02</span></div><div class="step-r"><div class="step-t">Download &amp; install the APK</div><p class="step-d">Download the APK above, tap the file in your notifications, and confirm install. No account needed.</p><span class="pill">apps/veltrix-app.apk</span></div></div>
+    <div class="step"><div class="step-l"><span class="step-n">03</span></div><div class="step-r"><div class="step-t">Share any text to scan</div><p class="step-d">In SMS, WhatsApp, or Gmail — tap Share → Veltrix App. Text is analysed instantly and a risk score returned.</p><span class="pill">Share → Veltrix App</span></div></div>
   </div>
 </section>
 
-<!-- FOOTER -->
 <footer class="reveal">
-  <div class="footer-logo">Veltrix <span>AI</span></div>
-  <div class="footer-copy">Privacy-first · No messages stored · v1.0.0</div>
+  <div class="fl">Veltrix <span>AI</span></div>
+  <div class="fc">Privacy-first · No messages stored · v1.0.0</div>
 </footer>
 
 <script>
-/* ── NAV scroll ── */
-const nav = document.getElementById('nav');
-window.addEventListener('scroll', () => {
-  nav.classList.toggle('scrolled', window.scrollY > 20);
-});
+/* NAV */
+const nav=document.getElementById('nav');
+window.addEventListener('scroll',()=>nav.classList.toggle('on',scrollY>30));
 
-/* ── DataGrid Hero ── */
-(function buildGrid() {
-  const canvas = document.getElementById('grid-canvas');
-  const ROWS = 22, COLS = 40, GAP = 3;
-
-  function setup() {
-    canvas.style.gridTemplateColumns = `repeat(${COLS}, 1fr)`;
-    canvas.style.gridTemplateRows = `repeat(${ROWS}, 1fr)`;
-    canvas.style.gap = GAP + 'px';
-    canvas.innerHTML = '';
-
-    const total = ROWS * COLS;
-    const cr = Math.floor(ROWS / 2);
-    const cc = Math.floor(COLS / 2);
-
-    for (let i = 0; i < total; i++) {
-      const r = Math.floor(i / COLS);
-      const c = i % COLS;
-      const dr = Math.abs(r - cr);
-      const dc = Math.abs(c - cc);
-      const delay = Math.sqrt(dr * dr + dc * dc) * 0.18;
-
-      const opMin = 0.02 + Math.random() * 0.03;
-      const opMax = 0.12 + Math.random() * 0.22;
-      const dur   = 3 + Math.random() * 5;
-
-      const cell = document.createElement('div');
-      cell.className = 'cell';
-      cell.style.setProperty('--opacity-min', opMin);
-      cell.style.setProperty('--opacity-max', opMax);
-      cell.style.setProperty('--dur', dur + 's');
-      cell.style.setProperty('--delay', delay.toFixed(3) + 's');
-      canvas.appendChild(cell);
-    }
+/* GRID */
+(function(){
+  const el=document.getElementById('grid');
+  const R=26,C=46;
+  el.style.cssText+=`grid-template-columns:repeat(${C},1fr);grid-template-rows:repeat(${R},1fr);gap:2px;padding:2px`;
+  const cr=R/2,cc=C/2,f=document.createDocumentFragment();
+  for(let i=0;i<R*C;i++){
+    const r=Math.floor(i/C),c=i%C;
+    const dist=Math.sqrt((r-cr)**2+(c-cc)**2);
+    const cell=document.createElement('div');
+    cell.className='cell';
+    cell.style.cssText=
+      `--d:${(3+Math.random()*5).toFixed(2)}s;`+
+      `--dl:${(dist*.13).toFixed(3)}s;`+
+      `--mn:${(0.03+Math.random()*.05).toFixed(3)};`+
+      `--mx:${(0.2+Math.random()*.42).toFixed(3)}`;
+    f.appendChild(cell);
   }
-
-  setup();
-
-  /* mouse glow */
-  window.addEventListener('mousemove', e => {
-    const rect = canvas.getBoundingClientRect();
-    canvas.style.setProperty('--mouse-x', (e.clientX - rect.left) + 'px');
-    canvas.style.setProperty('--mouse-y', (e.clientY - rect.top) + 'px');
+  el.appendChild(f);
+  window.addEventListener('mousemove',e=>{
+    const r=el.getBoundingClientRect();
+    el.style.setProperty('--mx',(e.clientX-r.left)+'px');
+    el.style.setProperty('--my',(e.clientY-r.top)+'px');
   });
 })();
 
-/* ── Scroll reveal ── */
-const revealEls = document.querySelectorAll('.reveal');
-const io = new IntersectionObserver(entries => {
-  entries.forEach(e => {
-    if (e.isIntersecting) {
-      e.target.classList.add('visible');
-      io.unobserve(e.target);
-    }
-  });
-}, { threshold: 0.1 });
-revealEls.forEach(el => io.observe(el));
+/* REVEAL */
+const io=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}});
+},{threshold:.08});
+document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
 </script>
 </body>
 </html>
