@@ -5,7 +5,9 @@ Product: Veltrix AI
 
 Veltrix AI is an end-to-end phishing detection platform that protects users across email and web workflows using AI classification, URL risk detection, and rule-based threat intelligence.
 
-## Problem Statement
+## Problem Statement & Domain
+### Domain - Cyber Security
+### Problem Statment - Multilingual Phishing & Threat Intelligence Hub
 
 Phishing attacks are increasing in speed, quality, and social engineering complexity. Most users cannot reliably identify suspicious messages, fake links, or impersonation attempts in real time. Existing protections are often fragmented and do not provide a unified, explainable, and user-facing experience.
 
